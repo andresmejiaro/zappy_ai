@@ -1,13 +1,13 @@
 import socket
 
-from World import World
+from Agent import Agent
 
 
 class Orchester():
 
-    def __init__(self, world: World):
+    def __init__(self, Agent: Agent):
         self.partial_msg = b''
-        self.world = world
+        self.Agent = Agent
     
     def process_input(self, input):
         self.partial_msg += input
@@ -17,7 +17,7 @@ class Orchester():
             if len(temp) == 0:
                 self.partial_msg = b''
                 break
-            self.world.command(temp[0].decode("utf-8"))
+            self.Agent.command(temp[0].decode("utf-8"))
             if len(temp) == 1:
                 self.partial_msg = b''
                 break
@@ -38,8 +38,8 @@ class Orchester():
                     else:
                         input = ""
                     self.process_input(input);
-                    self.world.sanity_check()
-                    message = self.world.generate_message(args);
+                    self.Agent.sanity_check()
+                    message = self.Agent.generate_message(args);
                     if len(message) > 0:
                         client.sendall((message + '\n').encode())
         except ConnectionRefusedError:

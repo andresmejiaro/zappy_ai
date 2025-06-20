@@ -1,6 +1,6 @@
 import argparse
 from main_loop import Orchester
-from World import World
+from Agent import Agent
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Zappy Client!!!", add_help=False)
@@ -17,8 +17,8 @@ def parse_args():
 
 def main():
     args = parse_args()
-    world = World(args)
-    orc = Orchester(world)
+    Agent = Agent(args)
+    orc = Orchester(Agent)
     orc.main_loop(args)
    
 

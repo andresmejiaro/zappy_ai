@@ -19,20 +19,20 @@ def generate_random_message():
         return commands_text[random_n] + ' ' + str(hash(random_n2))
 
 
-class World():
+class Agent():
     
     def __init__(self, args):
-        self.world = {"identity":"drone","position" :None, "facing":["N","S","E","W"] }
         self.action_queue = []
-        self.partial_msg = b''
         self.starting = 0
         self.message_queue = []
         self.team = args.n
         self.nb_client = 0
         self.movement_history = []
+        self.starting_time = None
+        self.tick = None
         
 
-    def starting_command(self, command):
+    def starting_command(self, command: str):
         if self.starting == 0:
             if command == "BIENVENUE":
                 self.starting += 1
@@ -45,6 +45,7 @@ class World():
             if command.isdigit():
                 self.nb_client = int(command)
                 self.starting += 1
+                self.starting_time = time.time()
                 return
             else:
                 self.starting = 4
@@ -84,6 +85,8 @@ class World():
         pass
 
     def message_processer(self,command):
+        if self.tick is None:
+            self.tick = time.time() - self.starting_time
         pass
 
     def processer_select(self,command: str):
@@ -124,7 +127,7 @@ class World():
             return ""
 
 
-    def update_world(self,msg: str):
+    def update_Agent(self,msg: str):
         func = msg.split(maxsplit=2)
         if func[0] in self.updater.keys():
             self.updater[func[0]](func[1])
