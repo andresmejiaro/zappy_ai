@@ -1,46 +1,55 @@
 import socket
-from objects import commands_single, commands_object, commands_text, objects
-import random
-import time
+
+from World import World
 
 
-def generate_random_message():
-    if not hasattr(generate_random_message, "weights"):
-        generate_random_message.weights = [len(commands_single), len(commands_object), len(commands_text)]
-        generate_random_message.tot_weight = sum(generate_random_message.weights)
-    random_n = random.randint(0,generate_random_message.tot_weight - 1)
-    if random_n < generate_random_message.weights[0]:
-        return commands_single[random_n]
-    random_n -= generate_random_message.weights[0]
-    if random_n < generate_random_message.weights[1]:
-        random_n2 = random.randint(0, len(objects) - 1)
-        return commands_object[random_n] + ' ' + objects[random_n2]
-    random_n -= generate_random_message.weights[1]
-    if random_n < generate_random_message.weights[2]:
-        random_n2 = random.randint(0, 9999)
-        return commands_text[random_n] + ' ' + str(hash(random_n2))
+class Orchester():
 
-
-def generate_message(args, in_message):
-    if args.random:
-        time.sleep(1)
-        return generate_random_message()
+    def __init__(self, world: World):
+        self.partial_msg = b''
+        self.world = world
     
+    def process_input(self, input):
+        self.partial_msg += input
+        s = self.partial_msg.find(b'\n')
+        while s != -1:
+            temp = self.partial_msg.split(b'\n',1)
+            if len(temp) == 0:
+                self.partial_msg = b''
+                break
+            self.world.command(temp[0].decode("utf-8"))
+            if len(temp) == 1:
+                self.partial_msg = b''
+                break
+            else:
+                self.partial_msg = temp[1]
+            s = self.partial_msg.find(b'\n')
 
 
-def main_loop(args):
-    try:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
-            client.connect((args.h, args.p))
-            while True:
-                if not args.random:
-                    in_message = client.recv(1024)
-                else:
-                    in_message = ""
-                message = generate_message(args, in_message);
-                if len(message) > 0:
-                    client.sendall((message + '\n').encode())
-    except ConnectionRefusedError:
-        print("Server is down. Unable to connect.")
-    except Exception as e:
-        print("An error occurred:", e)
+    def main_loop(self, args):
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
+                client.connect((args.h, args.p))
+                while True:
+                    if not args.random:
+                        input = client.recv(16)
+                        if not input:
+                            break
+                    else:
+                        input = ""
+                    self.process_input(input);
+                    message = self.world.generate_message(args);
+                    if len(message) > 0:
+                        client.sendall((message + '\n').encode())
+        except ConnectionRefusedError:
+            print("Server is down. Unable to connect.")
+        except Exception as e:
+            print("An error occurred:", e)
+
+
+
+
+
+
+
+
