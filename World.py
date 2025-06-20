@@ -29,6 +29,7 @@ class World():
         self.message_queue = []
         self.team = args.n
         self.nb_client = 0
+        self.movement_history = []
         
 
     def starting_command(self, command):
@@ -61,20 +62,63 @@ class World():
                 self.coords = map(int,coords)
                 self.starting += 1
 
+    def sanity_check(self):
+        pass
 
+    def ok_processer(self, command):
+        pass
+    
+    def ko_processer(self, command):
+        pass
+
+    def elevation_en_cours_processer(self,command):
+        pass
+
+    def mort_processer(self,command):
+        pass
+
+    def bracket_processer(self,command):
+        pass
+
+    def niveau_actuel_processer(self,command):
+        pass
+
+    def message_processer(self,command):
+        pass
+
+    def processer_select(self,command: str):
+        static_responses = {"ok":self.ok_processer,
+                            "ko": self.ko_processer,
+                            "elevation en cours":self.elevation_en_cours_processer,
+                            "mort":self.mort_processer}
+        if command in static_responses:
+            return static_responses[command] 
+        if command[0] == '{':
+            return self.bracket_processer
+        if command.isnumeric():
+            return self.numeric_processer
+        if command.startswith("niveau actuel"):
+            return self.niveau_actuel_processer
+        if command.startswith("message"):
+            return self.message_processer
+        print(f"Unknown command type {command} returning empty hander. Command will be ignored")
+        return lambda x: None
+    
     def command(self, command):
         if len(command) == 0:
             return
         if self.starting < 3:
             self.starting_command(command)
             return
+        processer = self.processer_select(command)
+        processer(command)
 
 
     def generate_message(self, args)->str:
         if args.random:
             time.sleep(1)
             return generate_random_message()
-        if len(self.message_queue) > 0:
+        if len(self.message_queue) > 0 and len(self.action_queue) < 10:
             return self.message_queue.pop(0)
         else:
             return ""

@@ -38,6 +38,7 @@ class Orchester():
                     else:
                         input = ""
                     self.process_input(input);
+                    self.world.sanity_check()
                     message = self.world.generate_message(args);
                     if len(message) > 0:
                         client.sendall((message + '\n').encode())
