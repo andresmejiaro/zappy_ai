@@ -17,8 +17,8 @@ def parse_args():
 
 def main():
     args = parse_args()
-    Agent = Agent(args)
-    orc = Orchester(Agent)
+    agent = Agent(args)
+    orc = Orchester(agent)
     orc.main_loop(args)
    
 
