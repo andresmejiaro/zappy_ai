@@ -6,15 +6,16 @@ class Status(Enum):
     S = 1
     F = -1
     O = 0
+    
 
 class Action(ABC):
 
     @abstractmethod
-    def status(self)->Status:
+    def status(self, object)->Status:
         pass
 
     @abstractmethod
-    def run(self):
+    def run(self, object):
         pass
     
     def __and__(self,A2):
@@ -41,16 +42,16 @@ class AND(Action):
         self.A1 = A1
         self.A2 = A2
     
-    def status(self)-> Status:
-        if self.A1.status() == Status.S:
-            return self.A2.status()
-        return self.A1.status()
+    def status(self,object)-> Status:
+        if self.A1.status(object) == Status.S:
+            return self.A2.status(object)
+        return self.A1.status(object)
     
-    def run(self):
-        if self.A1.status() == Status.O:
-            self.A1.run()
-        if self.A1.status() == Status.S:
-            self.A2.run()
+    def run(self,object):
+        if self.A1.status(object) == Status.O:
+            self.A1.run(object)
+        if self.A1.status(object) == Status.S:
+            self.A2.run(object)
 
 
 class OR(Action):
@@ -59,17 +60,17 @@ class OR(Action):
         self.A2 = A2
     
     def status(self)-> Status:
-        if self.A1.status() == Status.S or self.A2.status() == Status.S:
+        if self.A1.status(object) == Status.S or self.A2.status() == Status.S:
             return Status.S
-        if self.A1.status() == Status.O or self.A2.status() == Status.O:
+        if self.A1.status(object) == Status.O or self.A2.status() == Status.O:
             return Status.O
         return Status.F
     
     def run(self):
-        if self.A1.status() == Status.O:
-            self.A1.run()
-        if self.A1.status() == Status.F:
-            self.A2.run()        
+        if self.A1.status(object) == Status.O:
+            self.A1.run(object)
+        if self.A1.status(object) == Status.F:
+            self.A2.run(object)        
 
 
 class NOT(Action):
@@ -77,12 +78,12 @@ class NOT(Action):
         self.A1 = A1
     
     def status(self)-> Status:
-        if self.A1.status() == Status.S:
+        if self.A1.status(object) == Status.S:
             return Status.F
-        if self.A1.status() == Status.F:
+        if self.A1.status(object) == Status.F:
             return Status.S
         return Status.O
     
     def run(self):
-        self.A1.run()        
+        self.A1.run(object)        
 

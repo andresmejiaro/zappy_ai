@@ -38,11 +38,9 @@ class   SOrchester():
                 with conn:
                     while True:
                         self.process_input(input)
-                        while len(self.game.message_queue) > 0:
-                            message = self.game.generate_message()
-                            if len(message) > 0:
-                                print(f"Server: {message}")
-                                conn.sendall((message + '\n').encode())
+                        message = self.game.generate_message()
+                        print(f"Server: {message}")
+                        conn.sendall((message + '\n').encode())
                         input = conn.recv(16)
                         if not input:
                             break

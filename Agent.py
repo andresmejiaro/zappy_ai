@@ -1,6 +1,11 @@
 import time
 from objects import commands_single, commands_object, commands_text, objects
 import random
+import numpy as np
+from ActionTree import Status
+
+#Rotating to the left
+DIRECTIONS = list(map(np.array,[[1,0],[0,-1],[-1,0],[0,1]]))
 
 def generate_random_message():
     if not hasattr(generate_random_message, "weights"):
@@ -22,21 +27,26 @@ def generate_random_message():
 class Agent():
     
     def __init__(self, args):
-        self.action_queue = []
+        self.running_routine = [] ## Messages Sent not answered
+        self.unsent_commands = [] ## Messages to be sent
+        self.resolved_queue = [] ## Messages Resolved includes status
         self.starting = 0
-        self.message_queue = []
         self.team = args.n
         self.nb_client = 0
         self.movement_history = []
         self.starting_time = None
         self.tick = None
+        self.size = None
+        self.pos = np.array([0,0])
+        self.facing = 0
+        self.objects = None
         
 
     def starting_command(self, command: str):
         if self.starting == 0:
             if command == "BIENVENUE":
                 self.starting += 1
-                self.message_queue.append(f"{self.team}")
+                self.unsent_commands.append(f"{self.team}")
                 return
             else:
                 print(f"No se recibio el mensaje de bienvenida al iniciar {command}")
@@ -60,15 +70,57 @@ class Agent():
                     self.starting = 4
                     print(f"esto deberian ser numeros {x}")
             if self.starting != 4:
-                self.coords = map(int,coords)
+                self.size = np.array(list(map(int,coords)))
+                self.objects = [[[] for y in range(self.size[1])] for x in range(self.size[0])]
                 self.starting += 1
 
-    def sanity_check(self):
+    def status_check(self):
+        pass
+        
+    def avance_processer(self, command):
+        print(f"Old position: {self.pos}")
+        self.pos += DIRECTIONS[self.facing]
+        self.pos[0] = (self.pos[0] + self.size[0]) % self.size[0]
+        self.pos[1] = (self.pos[1] + self.size[1]) % self.size[1]
+        print(f"New position: {self.pos}")
+        self.resolve_from_running_routine("avance")
+    
+    def droite_processer(self,command):
+        pass
+    
+    def gauche_processer(self,command):
+        pass
+    
+    def prend_processer(self,command):
+        pass
+    
+    def pose_processer(self,command):
+        pass
+    
+    def expulse_processer(self,command):
+        pass
+    
+    def broadcast_processer(self,command):
+        pass
+    
+    def fork_processer(self,command):
         pass
 
     def ok_processer(self, command):
-        pass
-    
+        okaiable_commands = {"avance": self.avance_processer,
+                             "droite": self.droite_processer,
+                             "gauche": self.gauche_processer,
+                              "prend": self.prend_processer,
+                              "pose": self.pose_processer,
+                              "expulse": self.expulse_processer,
+                              "broadcast": self.broadcast_processer,
+                               "fork": self.fork_processer}    
+        for i in range(len(self.running_routine)):
+            if self.running_routine[i][0] in okaiable_commands.keys():
+                break
+        x = self.running_routine[i]
+        okaiable_commands[x[0]](command)
+            
     def ko_processer(self, command):
         pass
 
@@ -77,9 +129,45 @@ class Agent():
 
     def mort_processer(self,command):
         pass
+    
+    def resolve_from_running_routine(self, command, status = "ok"):
+       for i in range(len(self.running_routine)):
+           if self.running_routine[i][0] == command:
+               y = self.running_routine.pop(i)
+               y.append(status)
+               self.resolved_queue.append(y)
+               break 
+    
+    def soir_processer(self, command:str):
+        left_dir = DIRECTIONS[(self.facing + 1) % 4]
+        front_dir = DIRECTIONS[(self.facing) % 4]
+        contents = command.removeprefix("{").removesuffix("}").split(",")
+        
+        w = 0
+        for x in range(9999):
+            if w >= len(contents):
+                break
+            for y in range(2*x + 1):
+                coord = self.pos + x*front_dir +(y - x) * (-left_dir) 
+                coord = coord.tolist()
+                self.objects[coord[0]][coord[1]].append(contents[w].split())
+                w += 1
+        print(f"soir proccessed")
+        self.resolve_from_running_routine("soir")
+
+    def inventaire_processer(self, command):
+        pass
 
     def bracket_processer(self,command):
-        pass
+        for i in range(len(self.running_routine)):
+            if self.running_routine[i][0] in ["soir", "inventaire"]:
+                break
+        x = self.running_routine[i  ]
+        if x[0] == "soir":
+            self.soir_processer(command)
+        if x[0] == "inventaire":
+            self.inventaire_processer(command)
+
 
     def niveau_actuel_processer(self,command):
         pass
@@ -107,6 +195,7 @@ class Agent():
         print(f"Unknown command type {command} returning empty hander. Command will be ignored")
         return lambda x: None
     
+    ### process command from server
     def command(self, command):
         if len(command) == 0:
             return
@@ -121,18 +210,19 @@ class Agent():
         if args.random:
             time.sleep(1)
             return generate_random_message()
-        if len(self.message_queue) > 0 and len(self.action_queue) < 10:
-            return self.message_queue.pop(0)
+        if len(self.unsent_commands) > 0 and len(self.running_routine) < 10:
+            y = self.unsent_commands.pop(0)
+            return y
         else:
             return ""
 
 
-    def update_Agent(self,msg: str):
-        func = msg.split(maxsplit=2)
-        if func[0] in self.updater.keys():
-            self.updater[func[0]](func[1])
-        else:
-            print(f"Command {func[0]} in {msg} not found skipping")
+    # def update_Agent(self,msg: str):
+    #     func = msg.split(maxsplit=2)
+    #     if func[0] in self.updater.keys():
+    #         self.updater[func[0]](func[1])
+    #     else:
+    #         print(f"Command {func[0]} in {msg} not found skipping")
 
-    updater = {}
+    # updater = {}
     #updater = {"avance", "droite", "gauche", "voir", "inventaire", "expulse", "incantation", "fork", "connect_nbr","prend", "pose","broadcast"}

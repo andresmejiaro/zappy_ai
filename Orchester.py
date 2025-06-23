@@ -1,13 +1,14 @@
 import socket
 
 from Agent import Agent
-
+from ActionTree import Action, Status
 
 class Orchester():
 
-    def __init__(self, Agent: Agent):
+    def __init__(self, agent: Agent, plan: Action):
         self.partial_msg = b''
-        self.Agent = Agent
+        self.agent = agent
+        self.plan = plan
     
     def process_input(self, input):
         self.partial_msg += input
@@ -17,7 +18,7 @@ class Orchester():
             if len(temp) == 0:
                 self.partial_msg = b''
                 break
-            self.Agent.command(temp[0].decode("utf-8"))
+            self.agent.command(temp[0].decode("utf-8"))
             if len(temp) == 1:
                 self.partial_msg = b''
                 break
@@ -37,11 +38,14 @@ class Orchester():
                             break
                     else:
                         input = ""
-                    self.process_input(input);
-                    self.Agent.sanity_check()
-                    message = self.Agent.generate_message(args);
-                    if len(message) > 0:
-                        client.sendall((message + '\n').encode())
+                    self.process_input(input)
+                    if self.plan.status(self.agent) != Status.S:
+                        self.plan.run(self.agent)
+                    else:
+                        print("Lo Logre!")
+                        break
+                    message = self.agent.generate_message(args)
+                    client.sendall((message + '\n').encode())
         except ConnectionRefusedError:
             print("Server is down. Unable to connect.")
         except Exception as e:

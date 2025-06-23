@@ -1,5 +1,6 @@
 import argparse
-from main_loop import Orchester
+from Orchester import Orchester
+from Plans import Basic
 from Agent import Agent
 
 def parse_args():
@@ -15,13 +16,13 @@ def parse_args():
     return parser.parse_args()
 
 
+
 def main():
     args = parse_args()
     agent = Agent(args)
-    orc = Orchester(agent)
+    soir = Basic("soir") & Basic("avance") & Basic("soir")
+    orc = Orchester(agent,soir)
     orc.main_loop(args)
-   
-
 
 if __name__ == "__main__":
     main()
