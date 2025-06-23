@@ -40,6 +40,8 @@ class Agent():
         self.pos = np.array([0,0])
         self.facing = 0
         self.objects = None
+        self.turn = 0
+        self.inventory ={"nourriture": 10, "linemate": 0, "deraumere": 0, "sibur": 0, "mendiane": 0, "phiras": 0, "thystame": 0}
         
 
     def starting_command(self, command: str):
@@ -77,25 +79,46 @@ class Agent():
     def status_check(self):
         pass
         
-    def avance_processer(self, command):
+    def avance_processer(self, command, x= None):
         print(f"Old position: {self.pos}")
         self.pos += DIRECTIONS[self.facing]
         self.pos[0] = (self.pos[0] + self.size[0]) % self.size[0]
         self.pos[1] = (self.pos[1] + self.size[1]) % self.size[1]
         print(f"New position: {self.pos}")
+        self.turn += 7
         self.resolve_from_running_routine("avance")
     
-    def droite_processer(self,command):
-        pass
+    def droite_processer(self,command,x = None):
+        print(f"Old facing: {DIRECTIONS[self.facing]}")
+        self.facing = (self.facing + 3) % 4
+        print(f"New facing: {DIRECTIONS[self.facing]}")
+        self.turn += 7
+        self.resolve_from_running_routine("droite")
+        
     
-    def gauche_processer(self,command):
-        pass
+    def gauche_processer(self,command,x = None):
+        print(f"Old facing: {DIRECTIONS[self.facing]}")
+        self.facing = (self.facing + 1) % 4
+        print(f"New facing: {DIRECTIONS[self.facing]}")
+        self.turn += 7
+        self.resolve_from_running_routine("gauche")
     
-    def prend_processer(self,command):
-        pass
-    
-    def pose_processer(self,command):
-        pass
+    def prend_processer(self,command,x,status = "ok"):
+        if status == "ok":
+            things = x.split(" ")
+            print(f"Picking up {things[1]}")
+            self.inventory[things[1]] += 1
+        self.turn += 7
+        self.resolve_from_running_routine(x, status)
+
+    def pose_processer(self,command,x, status = "ok"):
+        if status == "ok":
+            things = x.split()
+            print(f"Dropping {things[1]}")
+            self.inventory[things[1]] -= 1
+        self.turn += 7  
+        self.resolve_from_running_routine(x, status)
+
     
     def expulse_processer(self,command):
         pass
@@ -116,13 +139,25 @@ class Agent():
                               "broadcast": self.broadcast_processer,
                                "fork": self.fork_processer}    
         for i in range(len(self.running_routine)):
-            if self.running_routine[i][0] in okaiable_commands.keys():
-                break
-        x = self.running_routine[i]
-        okaiable_commands[x[0]](command)
+            for j in okaiable_commands.keys():
+                if self.running_routine[i][0].startswith(j):
+                    x = self.running_routine[i]
+                    okaiable_commands[j](command, x[0])
+                    return
             
     def ko_processer(self, command):
-        pass
+        okaiable_commands = {"prend": self.prend_processer,
+                              "pose": self.pose_processer,
+                              "expulse": self.expulse_processer}    
+        for i in range(len(self.running_routine)):
+            for j in okaiable_commands.keys():
+                if self.running_routine[i][0].startswith(j):
+                    x = self.running_routine[i]
+                    okaiable_commands[j](command, x[0])
+                    return
+        print(f"ko for unknown command most likely {self.running_routine[0][0]}")
+        self.resolve_from_running_routine(self.running_routine[0][0], "ko")
+
 
     def elevation_en_cours_processer(self,command):
         pass
@@ -142,7 +177,6 @@ class Agent():
         left_dir = DIRECTIONS[(self.facing + 1) % 4]
         front_dir = DIRECTIONS[(self.facing) % 4]
         contents = command.removeprefix("{").removesuffix("}").split(",")
-        
         w = 0
         for x in range(9999):
             if w >= len(contents):
@@ -152,8 +186,9 @@ class Agent():
                 coord = coord.tolist()
                 self.objects[coord[0]][coord[1]].append(contents[w].split())
                 w += 1
-        print(f"soir proccessed")
+        print(f"soir {command}")
         self.resolve_from_running_routine("soir")
+        self.turn += 7
 
     def inventaire_processer(self, command):
         pass

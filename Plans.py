@@ -2,10 +2,13 @@ from ActionTree import Action, Status
 import random
 
 class Basic(Action):
-    def __init__(self, command):
+    def __init__(self, command, resource = ''):
         self.status_ = Status.O
         self.signaure = None
-        self.command = command
+        if resource == '':
+            self.command = command
+        else:
+            self.command = command + ' ' + resource
         self.started = False
 
     def run(self,object):
@@ -23,17 +26,16 @@ class Basic(Action):
         for x in object.running_routine:
             if x == [self.command,self.signaure]:
                 return Status.O
-        for x in object.resolved_queue[::-1]:
+        for x in object.resolved_queue:
             if x[0] == self.command and x[1] == self.signaure:
                 if x[2] == "ok":
                     return Status.S
                 return Status.F
-        print("Se perdio el soir de alguna manera")
         return Status.F
    
     def status(self, object):
         if self.status_ == Status.O:
             self.status_ = self.check_status(object)
         return self.status_
-    
+   
 

@@ -20,8 +20,10 @@ def parse_args():
 def main():
     args = parse_args()
     agent = Agent(args)
-    soir = Basic("soir") & Basic("avance") & Basic("soir")
-    orc = Orchester(agent,soir)
+    #plan = Basic("soir") & Basic("avance") & Basic("soir") & Basic("droite") & Basic("avance") & Basic("gauche") & Basic("avance") & Basic("soir")
+    plan = Basic("soir") & Basic("prend","linemate") & Basic("soir") & Basic("pose","linemate") & Basic("soir")
+    
+    orc = Orchester(agent,plan)
     orc.main_loop(args)
 
 if __name__ == "__main__":
