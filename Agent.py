@@ -33,10 +33,7 @@ class Agent():
         self.starting = 0
         self.team = args.n
         self.nb_client = 0
-        self.movement_history = []
-        self.starting_time = None
-        self.tick = None
-        self.size = None
+        self.size = np.array([10,10])
         self.pos = np.array([0,0])
         self.facing = 0
         self.objects = None

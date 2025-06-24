@@ -59,14 +59,14 @@ class OR(Action):
         self.A1 = A1
         self.A2 = A2
     
-    def status(self)-> Status:
+    def status(self, object)-> Status:
         if self.A1.status(object) == Status.S or self.A2.status() == Status.S:
             return Status.S
         if self.A1.status(object) == Status.O or self.A2.status() == Status.O:
             return Status.O
         return Status.F
     
-    def run(self):
+    def run(self,object):
         if self.A1.status(object) == Status.O:
             self.A1.run(object)
         if self.A1.status(object) == Status.F:
@@ -77,13 +77,39 @@ class NOT(Action):
     def __init__(self, A1:Action):
         self.A1 = A1
     
-    def status(self)-> Status:
+    def status(self,object)-> Status:
         if self.A1.status(object) == Status.S:
             return Status.F
         if self.A1.status(object) == Status.F:
             return Status.S
         return Status.O
     
-    def run(self):
-        self.A1.run(object)        
+    def run(self, object):
+        self.A1.run(object) 
+
+
+class LOGIC(Action):
+    def __init__(self, fun):
+        self.fun = fun
+
+    def status(self, object):
+        if self.fun(object):
+            return Status.S
+        return Status.F
+    
+    def run(self, object):
+        pass
+
+class LOOP(Action):
+    def __init__(self, generator):
+        self.generator = generator
+        self.plan = None
+
+    def status(self, object):
+        return Status.O
+
+    def run(self, object):
+        if self.plan is None or self.plan.status(object) != Status.O:
+            self.plan = self.generator(object)
+        self.plan.run(object)        
 
