@@ -50,6 +50,10 @@ def move_to(target: np.array, agent:Agent):
         target = shorstest_vect(targets)
 
         displacement = target - position
+
+        if np.linalg.norm(displacement) == 0:
+             return LOGIC(lambda x: True)
+        
         plan = []
 
         ### movement in x

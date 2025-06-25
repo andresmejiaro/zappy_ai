@@ -60,9 +60,9 @@ class OR(Action):
         self.A2 = A2
     
     def status(self, object)-> Status:
-        if self.A1.status(object) == Status.S or self.A2.status() == Status.S:
+        if self.A1.status(object) == Status.S or self.A2.status(object) == Status.S:
             return Status.S
-        if self.A1.status(object) == Status.O or self.A2.status() == Status.O:
+        if self.A1.status(object) == Status.O or self.A2.status(object) == Status.O:
             return Status.O
         return Status.F
     
@@ -113,3 +113,18 @@ class LOOP(Action):
             self.plan = self.generator(object)
         self.plan.run(object)        
 
+
+class GEN(Action):
+    def __init__(self, generator):
+        self.generator = generator
+        self.plan = None
+
+    def status(self, object):
+        if self.plan is None:
+            return Status.O
+        return self.plan.status(object)
+
+    def run(self, object):
+        if self.plan is None:
+            self.plan = self.generator(object)
+        self.plan.run(object)        

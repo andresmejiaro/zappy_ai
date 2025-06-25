@@ -4,6 +4,8 @@ from BasicAction import Basic
 from Agent import Agent
 from MovementPlans import move_to
 import numpy as np
+from Gather import pick_up, pick_up_multiple
+from ActionTree import LOOP, GEN
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Zappy Client!!!", add_help=False)
@@ -24,7 +26,10 @@ def main():
     agent = Agent(args)
     #plan = Basic("soir") & Basic("avance") & Basic("soir") & Basic("droite") & Basic("avance") & Basic("gauche") & Basic("avance") & Basic("soir")
     #plan = Basic("soir") & Basic("prend","linemate") & Basic("soir") & Basic("pose","linemate") & Basic("soir")
-    plan = move_to(np.array([4,6]),agent)
+    #plan = move_to(np.arrobjettsay([4,6]),agent)
+    #plan = Basic("soir") & LOOP(lambda x: pick_up(x,"linemate"))
+    #plan = Basic("soir") & LOOP(lambda x: pick_up(x,"phiras"))
+    plan = Basic("soir") & LOOP(lambda x: pick_up_multiple(x,["linemate","phiras"]))
     orc = Orchester(agent,plan)
     orc.main_loop(args)
 

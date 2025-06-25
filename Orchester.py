@@ -28,7 +28,7 @@ class Orchester():
 
 
     def main_loop(self, args):
-        try:
+        #try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
                 client.connect((args.h, args.p))
                 while True:
@@ -46,10 +46,10 @@ class Orchester():
                         break
                     message = self.agent.generate_message(args)
                     client.sendall((message + '\n').encode())
-        except ConnectionRefusedError:
-            print("Server is down. Unable to connect.")
-        except Exception as e:
-            print("An error occurred:", e)
+        #except ConnectionRefusedError:
+        #    print("Server is down. Unable to connect.")
+        #except Exception as e:
+        #    print("An error occurred:", e)
 
 
 

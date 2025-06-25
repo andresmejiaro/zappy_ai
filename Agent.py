@@ -105,6 +105,7 @@ class Agent():
             things = x.split(" ")
             print(f"Picking up {things[1]}")
             self.inventory[things[1]] += 1
+            self.objects[self.pos[0]][self.pos[1]].remove(things[1])
         self.turn += 7
         self.resolve_from_running_routine(x, status)
 
@@ -181,7 +182,7 @@ class Agent():
             for y in range(2*x + 1):
                 coord = self.pos + x*front_dir +(y - x) * (-left_dir) 
                 coord = coord.tolist()
-                self.objects[coord[0]][coord[1]].append(contents[w].split())
+                self.objects[coord[0]][coord[1]].extend(contents[w].split())
                 w += 1
         print(f"soir {command}")
         self.resolve_from_running_routine("soir")
