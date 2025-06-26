@@ -28,7 +28,7 @@ class   SOrchester():
 
 
     def main_loop(self):
-        try:
+        #try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server:
                 server.bind(("localhost", 5555))
                 server.listen(1)
@@ -44,10 +44,10 @@ class   SOrchester():
                         input = conn.recv(16)
                         if not input:
                             break
-        except ConnectionRefusedError:
-            print("Server is down. Unable to connect.")
-        except Exception as e:
-            print("An error occurred:", e)
+        #except ConnectionRefusedError:
+        #    print("Server is down. Unable to connect.")
+        #except Exception as e:
+        #    print("An error occurred:", e)
 
     
 

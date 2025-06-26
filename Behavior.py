@@ -3,10 +3,6 @@ from Agent import Agent
 from functools import reduce
 import operator
 
-elevation_ritual = 1 
-soir = 2
-droite = 3
-avance = 4
 
 def pose(object):
     pass
@@ -42,3 +38,21 @@ oportunistic = mark_nest | pick_if_in_place | pick_if_needed
 plan = lv2 & lv3 & lv4 & lv5 & lv6 & lv7 & lv8
 
 life = starving | oportunistic | plan
+
+
+# Test Basic actions
+#plan = Basic("soir") & Basic("avance") & Basic("soir") & Basic("droite") & Basic("avance") & Basic("gauche") & Basic("avance") & Basic("soir")
+#test pick up and put down
+#plan = Basic("soir") & Basic("prend","linemate") & Basic("soir") & Basic("pose","linemate") & Basic("soir")
+#Test move to may need fix
+#plan = move_to(np.arrobjettsay([4,6]),agent)
+# Test pickup in place
+#plan = Basic("soir") & LOOP(lambda x: pick_up(x,"linemate"))
+#Test pick up with finding
+#plan = Basic("soir") & LOOP(lambda x: pick_up(x,"phiras"))
+#Test pick up multiple
+#plan = Basic("soir") & LOOP(lambda x: pick_up_multiple(x,["linemate","phiras"]))
+#test eternal roam
+#plan = LOOP(lambda x: roam(x))
+# find food
+#plan = GEN(lambda x: pick_up(x, "norriture")) |  LOOP(lambda x: roam(x))

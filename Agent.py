@@ -38,8 +38,10 @@ class Agent():
         self.facing = 0
         self.objects = None
         self.turn = 0
-        self.inventory ={"nourriture": 10, "linemate": 0, "deraumere": 0, "sibur": 0, "mendiane": 0, "phiras": 0, "thystame": 0}
+        self.inventory ={"norriture": 10, "linemate": 0, "deraumere": 0, "sibur": 0, "mendiane": 0, "phiras": 0, "thystame": 0}
         self.level = 1
+        self.last_turn = 0
+        self.basket = []
         
 
     def starting_command(self, command: str):
@@ -74,8 +76,17 @@ class Agent():
                 self.objects = [[[] for y in range(self.size[1])] for x in range(self.size[0])]
                 self.starting += 1
 
-    def status_check(self):
+    def basket_add(self, item, who):
         pass
+
+    def basket_remove(self, item, who):
+        pass
+    
+    def food_update(self):
+        #update 
+        time_diff = self.turn - self.last_turn
+        self.inventory["norriture"] -= time_diff/126
+        self.last_turn = self.turn
         
     def avance_processer(self, command, x= None):
         print(f"Old position: {self.pos}")

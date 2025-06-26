@@ -57,6 +57,7 @@ def move_to(target: np.array, agent:Agent):
         plan = []
 
         ### movement in x
+        xfacing = facing
         if  displacement[0] > 0:
             plan += rotate_create(facing, 0)
             xfacing = 0

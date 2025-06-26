@@ -122,7 +122,10 @@ class GEN(Action):
     def status(self, object):
         if self.plan is None:
             return Status.O
-        return self.plan.status(object)
+        w = self.plan.status(object)
+        if w in [Status.F, Status.S]:
+            self.plan = None
+        return w
 
     def run(self, object):
         if self.plan is None:

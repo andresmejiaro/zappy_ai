@@ -24,13 +24,7 @@ def parse_args():
 def main():
     args = parse_args()
     agent = Agent(args)
-    #plan = Basic("soir") & Basic("avance") & Basic("soir") & Basic("droite") & Basic("avance") & Basic("gauche") & Basic("avance") & Basic("soir")
-    #plan = Basic("soir") & Basic("prend","linemate") & Basic("soir") & Basic("pose","linemate") & Basic("soir")
-    #plan = move_to(np.arrobjettsay([4,6]),agent)
-    #plan = Basic("soir") & LOOP(lambda x: pick_up(x,"linemate"))
-    #plan = Basic("soir") & LOOP(lambda x: pick_up(x,"phiras"))
-    #plan = Basic("soir") & LOOP(lambda x: pick_up_multiple(x,["linemate","phiras"]))
-    plan = LOOP(lambda x: roam(x))
+    plan = GEN(lambda x: pick_up(x, "norriture")) |  LOOP(lambda x: roam(x))
     orc = Orchester(agent,plan)
     orc.main_loop(args)
 

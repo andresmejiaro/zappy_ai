@@ -1,0 +1,320 @@
+soir {linemate,,phiras,}
+Old facing: [1 0]
+New facing: [0 1]
+soir {linemate,,deraumere,deraumere}
+Old facing: [0 1]
+New facing: [-1  0]
+soir {linemate,deraumere,,}
+Old facing: [-1  0]
+New facing: [ 0 -1]
+soir {linemate,,,}
+Old facing: [ 0 -1]
+New facing: [1 0]
+Old position: [0 0]
+New position: [1 0]
+soir {phiras,norriture,sibur,linemate}
+c1: 0 c2:-4
+c1: 1 c2:-3
+Old position: [1 0]
+New position: [2 0]
+Old facing: [1 0]
+New facing: [ 0 -1]
+Old position: [2 0]
+New position: [2 9]
+Picking up norriture
+Old facing: [ 0 -1]
+New facing: [1 0]
+soir {,deraumere,linemate,sibur}
+Old facing: [1 0]
+New facing: [0 1]
+soir {,sibur,sibur,phiras}
+Old facing: [0 1]
+New facing: [-1  0]
+soir {,phiras,,}
+Old facing: [-1  0]
+New facing: [ 0 -1]
+Old facing: [ 0 -1]
+New facing: [1 0]
+Old position: [2 9]
+New position: [3 9]
+Old position: [3 9]
+New position: [4 9]
+Old position: [4 9]
+New position: [5 9]
+soir {,sibur,deraumere,linemate}
+Old facing: [1 0]
+New facing: [0 1]
+soir {,linemate,thystame,}
+Old facing: [0 1]
+New facing: [-1  0]
+soir {,,linemate,phiras}
+Old facing: [-1  0]
+New facing: [ 0 -1]
+soir {,phiras,,sibur}
+Old facing: [ 0 -1]
+New facing: [1 0]
+Old facing: [1 0]
+New facing: [0 1]
+Old position: [5 9]
+New position: [5 0]
+Old position: [5 0]
+New position: [5 1]
+soir {linemate deraumere,phiras,,mendiane phiras}
+Old facing: [0 1]
+New facing: [-1  0]
+soir {linemate deraumere,mendiane phiras,,}
+Old facing: [-1  0]
+New facing: [ 0 -1]
+soir {linemate deraumere,,thystame,linemate}
+Old facing: [ 0 -1]
+New facing: [1 0]
+soir {linemate deraumere,linemate,linemate,phiras}
+Old facing: [1 0]
+New facing: [0 1]
+Old facing: [0 1]
+New facing: [-1  0]
+soir {linemate deraumere,mendiane phiras,,}
+Old facing: [-1  0]
+New facing: [ 0 -1]
+soir {linemate deraumere,,thystame,linemate}
+Old facing: [ 0 -1]
+New facing: [1 0]
+soir {linemate deraumere,linemate,linemate,phiras}
+Old facing: [1 0]
+New facing: [0 1]
+soir {linemate deraumere,phiras,,mendiane phiras}
+Old facing: [0 1]
+New facing: [-1  0]
+soir {linemate deraumere,mendiane phiras,,}
+Old facing: [-1  0]
+New facing: [ 0 -1]
+soir {linemate deraumere,,thystame,linemate}
+Old facing: [ 0 -1]
+New facing: [1 0]
+soir {linemate deraumere,linemate,linemate,phiras}
+Old facing: [1 0]
+New facing: [0 1]
+soir {linemate deraumere,phiras,,mendiane phiras}
+Old facing: [0 1]
+New facing: [-1  0]
+Old position: [5 1]
+New position: [4 1]
+Old position: [4 1]
+New position: [3 1]
+Old position: [3 1]
+New position: [2 1]
+soir {linemate,,,phiras}
+Old facing: [-1  0]
+New facing: [ 0 -1]
+soir {linemate,phiras,sibur,sibur}
+Old facing: [ 0 -1]
+New facing: [1 0]
+soir {linemate,sibur,,}
+Old facing: [1 0]
+New facing: [0 1]
+soir {linemate,,mendiane,}
+Old facing: [0 1]
+New facing: [-1  0]
+Old position: [2 1]
+New position: [1 1]
+Old position: [1 1]
+New position: [0 1]
+Old position: [0 1]
+New position: [9 1]
+soir {deraumere,,mendiane,linemate}
+Old facing: [-1  0]
+New facing: [ 0 -1]
+soir {deraumere,linemate,,linemate}
+Old facing: [ 0 -1]
+New facing: [1 0]
+soir {deraumere,linemate,deraumere,}
+Old facing: [1 0]
+New facing: [0 1]
+soir {deraumere,,,}
+Old facing: [0 1]
+New facing: [-1  0]
+Old position: [9 1]
+New position: [8 1]
+Old position: [8 1]
+New position: [7 1]
+Old position: [7 1]
+New position: [6 1]
+soir {linemate,,linemate deraumere,thystame}
+Old facing: [-1  0]
+New facing: [ 0 -1]
+soir {linemate,thystame,linemate,linemate}
+Old facing: [ 0 -1]
+New facing: [1 0]
+soir {linemate,linemate,linemate,}
+Old facing: [1 0]
+New facing: [0 1]
+soir {linemate,,phiras,}
+Old facing: [0 1]
+New facing: [-1  0]
+Old position: [6 1]
+New position: [5 1]
+soir {linemate deraumere,mendiane phiras,,}
+Old facing: [-1  0]
+New facing: [ 0 -1]
+soir {linemate deraumere,,thystame,linemate}
+Old facing: [ 0 -1]
+New facing: [1 0]
+soir {linemate deraumere,linemate,linemate,phiras}
+Old facing: [1 0]
+New facing: [0 1]
+soir {linemate deraumere,phiras,,mendiane phiras}
+Old facing: [0 1]
+New facing: [-1  0]
+Old position: [5 1]
+New position: [4 1]
+Old position: [4 1]
+New position: [3 1]
+soir {,mendiane,linemate,sibur}
+Old facing: [-1  0]
+New facing: [ 0 -1]
+soir {,sibur,sibur,}
+Old facing: [ 0 -1]
+New facing: [1 0]
+soir {,,,mendiane phiras}
+Old facing: [1 0]
+New facing: [0 1]
+soir {,mendiane phiras,,mendiane}
+Old facing: [0 1]
+New facing: [-1  0]
+Old facing: [-1  0]
+New facing: [ 0 -1]
+Old position: [3 1]
+New position: [3 0]
+soir {sibur,,linemate,linemate}
+Old facing: [ 0 -1]
+New facing: [1 0]
+soir {sibur,linemate,,}
+Old facing: [1 0]
+New facing: [0 1]
+soir {sibur,,,linemate}
+Old facing: [0 1]
+New facing: [-1  0]
+soir {sibur,linemate,sibur,}
+soir {sibur,linemate,sibur,}
+Old facing: [-1  0]
+New facing: [ 0 -1]
+soir {sibur,,linemate,linemate}
+Old facing: [ 0 -1]
+New facing: [1 0]
+soir {sibur,linemate,,}
+Old facing: [1 0]
+New facing: [0 1]
+soir {sibur,,,linemate}
+Old facing: [0 1]
+New facing: [-1  0]
+Old facing: [-1  0]
+New facing: [ 0 -1]
+Old facing: [ 0 -1]
+New facing: [1 0]
+Old position: [3 0]
+New position: [4 0]
+soir {,,thystame,linemate deraumere}
+Old facing: [1 0]
+New facing: [0 1]
+soir {,linemate deraumere,,}
+Old facing: [0 1]
+New facing: [-1  0]
+soir {,,sibur,linemate}
+Old facing: [-1  0]
+New facing: [ 0 -1]
+soir {,linemate,linemate,}
+Old facing: [ 0 -1]
+New facing: [1 0]
+Old facing: [1 0]
+New facing: [0 1]
+Old facing: [0 1]
+New facing: [-1  0]
+Old position: [4 0]
+New position: [3 0]
+soir {sibur,linemate,sibur,}
+Old facing: [-1  0]
+New facing: [ 0 -1]
+soir {sibur,,linemate,linemate}
+Old facing: [ 0 -1]
+New facing: [1 0]
+soir {sibur,linemate,,}
+Old facing: [1 0]
+New facing: [0 1]
+soir {sibur,,,linemate}
+Old facing: [0 1]
+New facing: [-1  0]
+Old position: [3 0]
+New position: [2 0]
+soir {sibur,,phiras,}
+Old facing: [-1  0]
+New facing: [ 0 -1]
+soir {sibur,,,linemate}
+Old facing: [ 0 -1]
+New facing: [1 0]
+soir {sibur,linemate,sibur,}
+Old facing: [1 0]
+New facing: [0 1]
+soir {sibur,,linemate,}
+Old facing: [0 1]
+New facing: [-1  0]
+Old position: [2 0]
+New position: [1 0]
+soir {phiras,deraumere,linemate,}
+Old facing: [-1  0]
+New facing: [ 0 -1]
+soir {phiras,,,}
+Old facing: [ 0 -1]
+New facing: [1 0]
+soir {phiras,,sibur,linemate}
+Old facing: [1 0]
+New facing: [0 1]
+soir {phiras,linemate,,deraumere}
+Old facing: [0 1]
+New facing: [-1  0]
+Old facing: [-1  0]
+New facing: [ 0 -1]
+Old facing: [ 0 -1]
+New facing: [1 0]
+Old position: [1 0]
+New position: [2 0]
+Old position: [2 0]
+New position: [3 0]
+soir {sibur,linemate,,}
+Old facing: [1 0]
+New facing: [0 1]
+soir {sibur,,,linemate}
+Old facing: [0 1]
+New facing: [-1  0]
+soir {sibur,linemate,sibur,}
+Old facing: [-1  0]
+New facing: [ 0 -1]
+soir {sibur,,linemate,linemate}
+Old facing: [ 0 -1]
+New facing: [1 0]
+soir {sibur,linemate,,}
+Old facing: [1 0]
+New facing: [0 1]
+soir {sibur,,,linemate}
+Old facing: [0 1]
+New facing: [-1  0]
+soir {sibur,linemate,sibur,}
+Old facing: [-1  0]
+New facing: [ 0 -1]
+soir {sibur,,linemate,linemate}
+Old facing: [ 0 -1]
+New facing: [1 0]
+Old position: [3 0]
+New position: [4 0]
+Old position: [4 0]
+New position: [5 0]
+soir {thystame,deraumere,linemate,linemate}
+Old facing: [1 0]
+New facing: [0 1]
+soir {thystame,linemate,linemate deraumere,}
+Old facing: [0 1]
+New facing: [-1  0]
+soir {thystame,,,linemate}
+Old facing: [-1  0]
+New facing: [ 0 -1]
+soir {thystame,linemate,,deraumere}
+Dude u ded

@@ -39,11 +39,15 @@ class Orchester():
                     else:
                         input = ""
                     self.process_input(input)
-                    if self.plan.status(self.agent) != Status.S:
-                        self.plan.run(self.agent)
-                    else:
-                        print("Lo Logre!")
+                    self.agent.food_update()
+                    if self.agent.inventory["norriture"] <= 0:
+                        print("Dude u ded")
                         break
+                    if self.plan.status(self.agent) != Status.S and self.agent.starting >= 3:
+                        self.plan.run(self.agent)
+                    # elif self.agent.starting >= 3:
+                    #     print("Lo Logre!")
+                    #     break
                     message = self.agent.generate_message(args)
                     client.sendall((message + '\n').encode())
         #except ConnectionRefusedError:

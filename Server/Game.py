@@ -23,9 +23,10 @@ class Game():
         self.objects = [[[] for y in range(self.y)] for x in range(self.x)]
         self.initial_fill()
         self.level = 1
-        self.inventory ={"nourriture": 10, "linemate": 0, "deraumere": 0, "sibur": 0, "mendiane": 0, "phiras": 0, "thystame": 0}
+        self.inventory ={"norriture": 10, "linemate": 0, "deraumere": 0, "sibur": 0, "mendiane": 0, "phiras": 0, "thystame": 0}
         self.team = None
 
+    
     def initial_fill(self):
         for x in range(self.x):
             for y in range(self.y):
@@ -86,6 +87,10 @@ class Game():
             print(f"Picking up {things[1]}")
             self.inventory[things[1]] += 1
             self.objects[self.pos[0]][self.pos[1]].remove(things[1])
+            xn = random.randint(0,self.x -1)
+            yn = random.randint(0,self.y -1)
+            self.objects[xn][yn].append(things[1])
+            
             return "ok"
         else:
             return "ko"
