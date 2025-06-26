@@ -4,7 +4,7 @@ from ActionTree import LOGIC, Action
 from BasicAction import Basic
 from Agent import Agent
 from functools import reduce
-
+import random 
 
 def closest_resource(agent: Agent, resource: str):
 
@@ -29,3 +29,14 @@ def pick_up_multiple(agent, resources)->Action:
     w = map(lambda x: pick_up(agent, x), resources)
     z = reduce(lambda x,y: x|y, w)
     return z
+
+
+def roam(agent: Agent):
+    r = Basic("soir") & Basic("droite") & Basic("soir") & Basic("droite") & Basic("soir") & Basic("droite") & Basic("soir") 
+    nt = random.randint(0,3)
+    for j in range(nt):
+        r = r & Basic("droite")
+    for j in range(2*agent.level - 2 + random.randint(0,3)):
+        r = r & Basic("avance")
+    return r
+

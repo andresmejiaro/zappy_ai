@@ -53,7 +53,7 @@ class Game():
             for y in range(2*x + 1):
                 coord = self.pos + x*front_dir +(y - x) * (-left_dir) 
                 coord = coord.tolist()
-                objects.append(self.objects[coord[0]][coord[1]])
+                objects.append(self.objects[coord[0] % self.x][coord[1] %self.y])
         toout =list(map(lambda x: " ".join(x), objects))
         toout = "{" + ",".join(toout) + "}"
         print(toout)

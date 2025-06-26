@@ -39,6 +39,7 @@ class Agent():
         self.objects = None
         self.turn = 0
         self.inventory ={"nourriture": 10, "linemate": 0, "deraumere": 0, "sibur": 0, "mendiane": 0, "phiras": 0, "thystame": 0}
+        self.level = 1
         
 
     def starting_command(self, command: str):
@@ -182,7 +183,7 @@ class Agent():
             for y in range(2*x + 1):
                 coord = self.pos + x*front_dir +(y - x) * (-left_dir) 
                 coord = coord.tolist()
-                self.objects[coord[0]][coord[1]].extend(contents[w].split())
+                self.objects[coord[0] % self.size[0]][coord[1] % self.size[1]].extend(contents[w].split())
                 w += 1
         print(f"soir {command}")
         self.resolve_from_running_routine("soir")
