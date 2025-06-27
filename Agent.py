@@ -4,6 +4,9 @@ import random
 import numpy as np
 from ActionTree import Status
 
+random.seed(42)
+
+
 #Rotating to the left
 DIRECTIONS = list(map(np.array,[[1,0],[0,-1],[-1,0],[0,1]]))
 
@@ -42,6 +45,10 @@ class Agent():
         self.level = 1
         self.last_turn = 0
         self.basket = []
+        self.totem_pos = None
+        self.totem_size = 0
+        self.inventory_group = self.inventory
+        self.objects_countdown = None
         
 
     def starting_command(self, command: str):
@@ -74,6 +81,7 @@ class Agent():
             if self.starting != 4:
                 self.size = np.array(list(map(int,coords)))
                 self.objects = [[[] for y in range(self.size[1])] for x in range(self.size[0])]
+                self.objects_countdown = np.zeros(self.size)
                 self.starting += 1
 
     def basket_add(self, item, who):
@@ -87,7 +95,13 @@ class Agent():
         time_diff = self.turn - self.last_turn
         self.inventory["norriture"] -= time_diff/126
         self.last_turn = self.turn
-        
+        if self.objects_countdown is not None:
+            breaks = -(self.objects_countdown - self.turn) > 504
+            for x in range(self.size[0]):
+                for y in range(self.size[1]):
+                    if breaks[x,y]:
+                        self.objects[x][y] = []
+
     def avance_processer(self, command, x= None):
         print(f"Old position: {self.pos}")
         self.pos += DIRECTIONS[self.facing]
@@ -117,7 +131,8 @@ class Agent():
             things = x.split(" ")
             print(f"Picking up {things[1]}")
             self.inventory[things[1]] += 1
-            self.objects[self.pos[0]][self.pos[1]].remove(things[1])
+            if things[1] in self.objects[self.pos[0]][self.pos[1]]:
+                self.objects[self.pos[0]][self.pos[1]].remove(things[1])
         self.turn += 7
         self.resolve_from_running_routine(x, status)
 
@@ -163,7 +178,7 @@ class Agent():
             for j in okaiable_commands.keys():
                 if self.running_routine[i][0].startswith(j):
                     x = self.running_routine[i]
-                    okaiable_commands[j](command, x[0])
+                    okaiable_commands[j](command, x[0],"ko")
                     return
         print(f"ko for unknown command most likely {self.running_routine[0][0]}")
         self.resolve_from_running_routine(self.running_routine[0][0], "ko")
@@ -194,7 +209,8 @@ class Agent():
             for y in range(2*x + 1):
                 coord = self.pos + x*front_dir +(y - x) * (-left_dir) 
                 coord = coord.tolist()
-                self.objects[coord[0] % self.size[0]][coord[1] % self.size[1]].extend(contents[w].split())
+                self.objects[coord[0] % self.size[0]][coord[1] % self.size[1]]= contents[w].split()
+                self.objects_countdown[coord[0] % self.size[0],coord[1] % self.size[1]] = self.turn
                 w += 1
         print(f"soir {command}")
         self.resolve_from_running_routine("soir")

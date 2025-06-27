@@ -27,15 +27,29 @@ def rotate_create(facing:int, rtarget: int)->list[Action]:
         
      
 #%%
-
 def shorstest_vect(array):
     indmin = np.array(list(map(lambda x: np.sum(np.abs(x)), array)))
     indmin = np.argmin(indmin)
     return array [indmin]
 
+def route_torus(position,target,agent):
+    target1 = position - target + DIRECTIONS[0] * agent.size[0]
+    target2 = position - target - DIRECTIONS[0] * agent.size[0]
+    target3 = position - target + DIRECTIONS[1] * agent.size[1]
+    target4 = position - target - DIRECTIONS[1] * agent.size[1]
+    target5 = position - target + DIRECTIONS[0] * agent.size[0] + DIRECTIONS[1] * agent.size[1]
+    target6 = position - target + DIRECTIONS[0] * agent.size[0] - DIRECTIONS[1] * agent.size[1]
+    target7 = position - target - DIRECTIONS[0] * agent.size[0] + DIRECTIONS[1] * agent.size[1]
+    target8 = position - target - DIRECTIONS[0] * agent.size[0] - DIRECTIONS[1] * agent.size[1]
+    targets = [position - target, target1, target2,target3, target4, target5, target6, target7, target8]
+    displacement = shorstest_vect(targets)
+    return displacement
 
 
-def move_to(target: np.array, agent:Agent):
+
+
+def move_to(target: np.array, agent:Agent) -> Action:
+        print(f"moving to: {target}")
         facing = agent.facing
         position = agent.pos
         target1 = target + DIRECTIONS[0] * agent.size[0]
@@ -48,14 +62,10 @@ def move_to(target: np.array, agent:Agent):
         target8 = target - DIRECTIONS[0] * agent.size[0] - DIRECTIONS[1] * agent.size[1]
         targets = [target, target1, target2,target3, target4, target5, target6, target7, target8]
         target = shorstest_vect(targets)
-
         displacement = target - position
-
         if np.linalg.norm(displacement) == 0:
-             return LOGIC(lambda x: True)
-        
+             return LOGIC(lambda x: True)  
         plan = []
-
         ### movement in x
         xfacing = facing
         if  displacement[0] > 0:
@@ -63,13 +73,10 @@ def move_to(target: np.array, agent:Agent):
             xfacing = 0
         elif displacement[0] < 0:
             plan += rotate_create(facing, 2)
-            xfacing = 2
-        
-        
+            xfacing = 2   
+       
         nmoves = np.abs(displacement[0])
-
         w = map(lambda x: Basic("avance"), range(nmoves))
-
         plan.extend(w)
 
         ### movement in y
@@ -80,9 +87,7 @@ def move_to(target: np.array, agent:Agent):
         
         nmoves = np.abs(displacement[1])
         w = map(lambda x: Basic("avance"), range(nmoves))
-
         plan.extend(w)
-
 
         return reduce( lambda x,y: x & y, plan)
 

@@ -11,10 +11,6 @@ class Status(Enum):
 class Action(ABC):
 
     @abstractmethod
-    def status(self, object)->Status:
-        pass
-
-    @abstractmethod
     def run(self, object):
         pass
     
@@ -42,16 +38,13 @@ class AND(Action):
         self.A1 = A1
         self.A2 = A2
     
-    def status(self,object)-> Status:
-        if self.A1.status(object) == Status.S:
-            return self.A2.status(object)
-        return self.A1.status(object)
     
     def run(self,object):
-        if self.A1.status(object) == Status.O:
-            self.A1.run(object)
-        if self.A1.status(object) == Status.S:
-            self.A2.run(object)
+        w = self.A1.run(object)
+        if w == Status.S:
+            return self.A2.run(object)
+        else:
+            return w
 
 
 class OR(Action):
@@ -59,75 +52,64 @@ class OR(Action):
         self.A1 = A1
         self.A2 = A2
     
-    def status(self, object)-> Status:
-        if self.A1.status(object) == Status.S or self.A2.status(object) == Status.S:
-            return Status.S
-        if self.A1.status(object) == Status.O or self.A2.status(object) == Status.O:
-            return Status.O
-        return Status.F
-    
     def run(self,object):
-        if self.A1.status(object) == Status.O:
-            self.A1.run(object)
-        if self.A1.status(object) == Status.F:
-            self.A2.run(object)        
+        w = self.A1.run(object)
+        if w == Status.F:
+            return self.A2.run(object)        
+        return w
 
 
 class NOT(Action):
     def __init__(self, A1:Action):
         self.A1 = A1
-    
-    def status(self,object)-> Status:
-        if self.A1.status(object) == Status.S:
-            return Status.F
-        if self.A1.status(object) == Status.F:
-            return Status.S
-        return Status.O
-    
+
     def run(self, object):
-        self.A1.run(object) 
+        w =self.A1.run(object)
+        if w == Status.F:
+            return Status.S
+        if w == Status.S:
+            return Status.F
+        return w 
 
 
 class LOGIC(Action):
     def __init__(self, fun):
         self.fun = fun
-
-    def status(self, object):
+ 
+    def run(self, object):
         if self.fun(object):
             return Status.S
         return Status.F
-    
-    def run(self, object):
-        pass
-
-class LOOP(Action):
-    def __init__(self, generator):
-        self.generator = generator
-        self.plan = None
-
-    def status(self, object):
-        return Status.O
-
-    def run(self, object):
-        if self.plan is None or self.plan.status(object) != Status.O:
-            self.plan = self.generator(object)
-        self.plan.run(object)        
-
+        
 
 class GEN(Action):
     def __init__(self, generator):
         self.generator = generator
         self.plan = None
 
-    def status(self, object):
-        if self.plan is None:
-            return Status.O
-        w = self.plan.status(object)
-        if w in [Status.F, Status.S]:
-            self.plan = None
-        return w
-
     def run(self, object):
         if self.plan is None:
             self.plan = self.generator(object)
-        self.plan.run(object)        
+        w = self.plan.run(object)
+        if w in [Status.S, Status.F]:
+            self.plan = None
+        return w        
+
+
+# class GEN(Action):
+#     def __init__(self, generator):
+#         self.generator = generator
+#         self.plan = None
+
+#     def status(self, object):
+#         if self.plan is None:
+#             return Status.O
+#         w = self.plan.status(object)
+#         if w in [Status.F, Status.S]:
+#             self.plan = None
+#         return w
+
+#     def run(self, object):
+#         if self.plan is None:
+#             self.plan = self.generator(object)
+#         self.plan.run(object)        

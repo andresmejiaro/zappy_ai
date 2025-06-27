@@ -2,10 +2,10 @@ import argparse
 from Orchester import Orchester
 from BasicAction import Basic
 from Agent import Agent
-from MovementPlans import move_to
 import numpy as np
-from action_generators import pick_up, pick_up_multiple, roam
-from ActionTree import LOOP, GEN
+from ActionTree import  GEN
+from behavior import find_food_if_hungry, lucky_stone, mark_totem
+from action_generators import gen_basic, roam
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Zappy Client!!!", add_help=False)
@@ -20,11 +20,10 @@ def parse_args():
     return parser.parse_args()
 
 
-
 def main():
     args = parse_args()
     agent = Agent(args)
-    plan = GEN(lambda x: pick_up(x, "norriture")) |  LOOP(lambda x: roam(x))
+    plan = find_food_if_hungry |  mark_totem | lucky_stone | GEN(lambda x: roam(x))
     orc = Orchester(agent,plan)
     orc.main_loop(args)
 

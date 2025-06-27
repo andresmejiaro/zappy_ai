@@ -1,6 +1,6 @@
 import numpy as np
 from MovementPlans import shorstest_vect, move_to
-from ActionTree import LOGIC, Action
+from ActionTree import LOGIC, Action, GEN
 from BasicAction import Basic
 from Agent import Agent
 from functools import reduce
@@ -9,7 +9,11 @@ import random
 def closest_resource(agent: Agent, resource: str):
 
     found = [np.array([x,y]) for x in range(agent.size[0]) for y in range(agent.size[1]) if resource in agent.objects[x][y]]
-    
+    if agent.totem_pos is not None:
+        for i,x in enumerate(found):
+            if np.array_equal(x,agent.totem_pos):
+                del found[i]
+                break
     if len(found) == 0:
         return None
     
@@ -19,7 +23,7 @@ def closest_resource(agent: Agent, resource: str):
 
 def pick_up(agent: Agent, resource: str) -> Action:
     x = closest_resource(agent, resource)
-    if x is None:
+    if x is None or len(x) == 0:
         return LOGIC(lambda x: False)
     actions = move_to(x, agent)
     return actions & Basic("prend",resource)
@@ -40,3 +44,5 @@ def roam(agent: Agent):
         r = r & Basic("avance")
     return r
 
+def gen_basic(command,resource = ''):
+    return GEN(lambda x: Basic(command, resource))

@@ -43,8 +43,8 @@ class Orchester():
                     if self.agent.inventory["norriture"] <= 0:
                         print("Dude u ded")
                         break
-                    if self.plan.status(self.agent) != Status.S and self.agent.starting >= 3:
-                        self.plan.run(self.agent)
+                    if  self.agent.starting >= 3:
+                        w = self.plan.run(self.agent)
                     # elif self.agent.starting >= 3:
                     #     print("Lo Logre!")
                     #     break

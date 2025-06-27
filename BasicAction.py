@@ -18,6 +18,9 @@ class Basic(Action):
             self.signaure = hash(random.random())
             object.running_routine.append([self.command, self.signaure])
             self.started = True
+            return self.status_
+        else:
+            return self.check_status(object)
 
     
     def check_status(self, object):
@@ -33,9 +36,9 @@ class Basic(Action):
                 return Status.F
         return Status.F
    
-    def status(self, object):
-        if self.status_ == Status.O:
-            self.status_ = self.check_status(object)
-        return self.status_
+    # def status(self, object):
+    #     if self.status_ == Status.O:
+    #         self.status_ = self.check_status(object)
+    #     return self.status_
    
 
