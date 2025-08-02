@@ -49,6 +49,7 @@ class Orchester():
                     #     print("Lo Logre!")
                     #     break
                     message = self.agent.generate_message(args)
+                    print(f"sending message {message}")
                     client.sendall((message + '\n').encode())
         #except ConnectionRefusedError:
         #    print("Server is down. Unable to connect.")

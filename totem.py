@@ -18,7 +18,7 @@ def mark_totem_gen(agent: Agent, resource: str)-> Action:
             del position[i]
             break
     if size >= agent.totem_size and len(position) > 0 and size > 0 and agent.inventory[resource]>=1:
-        plan = move_to(position[0], agent) & gen_basic("pose", resource) & LOGIC(lambda x:update_mark(agent,resource)) & gen_basic("soir")
+        plan = move_to(position[0], agent) & gen_basic("pose", resource) & LOGIC(lambda x:update_mark(agent,resource)) & gen_basic("voir")
         return plan
     return LOGIC(lambda x: False)
 

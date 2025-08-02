@@ -198,7 +198,7 @@ class Agent():
                self.resolved_queue.append(y)
                break 
     
-    def soir_processer(self, command:str):
+    def voir_processer(self, command:str):
         left_dir = DIRECTIONS[(self.facing + 1) % 4]
         front_dir = DIRECTIONS[(self.facing) % 4]
         contents = command.removeprefix("{").removesuffix("}").split(",")
@@ -212,8 +212,8 @@ class Agent():
                 self.objects[coord[0] % self.size[0]][coord[1] % self.size[1]]= contents[w].split()
                 self.objects_countdown[coord[0] % self.size[0],coord[1] % self.size[1]] = self.turn
                 w += 1
-        print(f"soir {command}")
-        self.resolve_from_running_routine("soir")
+        print(f"voir {command}")
+        self.resolve_from_running_routine("voir")
         self.turn += 7
 
     def inventaire_processer(self, command):
@@ -221,11 +221,11 @@ class Agent():
 
     def bracket_processer(self,command):
         for i in range(len(self.running_routine)):
-            if self.running_routine[i][0] in ["soir", "inventaire"]:
+            if self.running_routine[i][0] in ["voir", "inventaire"]:
                 break
         x = self.running_routine[i  ]
-        if x[0] == "soir":
-            self.soir_processer(command)
+        if x[0] == "voir":
+            self.voir_processer(command)
         if x[0] == "inventaire":
             self.inventaire_processer(command)
 

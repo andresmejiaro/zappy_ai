@@ -36,7 +36,7 @@ def pick_up_multiple(agent, resources)->Action:
 
 
 def roam(agent: Agent):
-    r = Basic("soir") & Basic("droite") & Basic("soir") & Basic("droite") & Basic("soir") & Basic("droite") & Basic("soir") 
+    r = Basic("voir") & Basic("droite") & Basic("voir") & Basic("droite") & Basic("voir") & Basic("droite") & Basic("voir") 
     nt = random.randint(0,3)
     for j in range(nt):
         r = r & Basic("droite")

@@ -46,7 +46,7 @@ class Game():
             return f"{self.x} {self.y}"
         
     
-    def soir(self):
+    def voir(self):
         objects = []
         left_dir = DIRECTIONS[(self.facing + 1) % 4]
         front_dir = DIRECTIONS[(self.facing) % 4]
@@ -111,8 +111,8 @@ class Game():
     def command(self, command):
         if len(command) == 0:
             return
-        if command == "soir":
-            self.respond(self.soir())
+        if command == "voir":
+            self.respond(self.voir())
         elif command == "avance":
             self.respond(self.avance())
         elif command == "droite":
