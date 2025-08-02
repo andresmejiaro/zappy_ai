@@ -41,11 +41,11 @@ class Agent():
         self.facing = 0
         self.objects = None
         self.turn = 0
-        self.inventory ={"norriture": 10, "linemate": 0, "deraumere": 0, "sibur": 0, "mendiane": 0, "phiras": 0, "thystame": 0}
+        self.inventory ={"nourriture": 10, "linemate": 0, "deraumere": 0, "sibur": 0, "mendiane": 0, "phiras": 0, "thystame": 0}
         self.level = 1
         self.last_turn = 0
         self.basket = []
-        self.totem_pos = None
+        self.totem_pos = np.array([0,0])
         self.totem_size = 0
         self.inventory_group = self.inventory
         self.objects_countdown = None
@@ -93,10 +93,12 @@ class Agent():
     def food_update(self):
         #update 
         time_diff = self.turn - self.last_turn
-        self.inventory["norriture"] -= time_diff/126
+        self.inventory["nourriture"] -= time_diff/126
+        if time_diff > 0:
+            print(f"food: {self.inventory["nourriture"]}")
         self.last_turn = self.turn
         if self.objects_countdown is not None:
-            breaks = -(self.objects_countdown - self.turn) > 504
+            breaks = -(self.objects_countdown - self.turn) > 100
             for x in range(self.size[0]):
                 for y in range(self.size[1]):
                     if breaks[x,y]:
@@ -217,7 +219,15 @@ class Agent():
         self.turn += 7
 
     def inventaire_processer(self, command):
-        pass
+        contents = command.removeprefix("{").removesuffix("}").split(",")
+        self.inventory = {}
+        for content in contents:
+            #str.split()
+            a = content.split()
+            self.inventory[a[0]] = int(a[1])
+        self.turn += 1
+        self.resolve_from_running_routine("inventaire")
+        return
 
     def bracket_processer(self,command):
         for i in range(len(self.running_routine)):
@@ -258,6 +268,7 @@ class Agent():
     
     ### process command from server
     def command(self, command):
+        print(f"Recieved command: {command}")
         if len(command) == 0:
             return
         if self.starting < 3:

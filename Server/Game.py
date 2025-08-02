@@ -7,7 +7,7 @@ random.seed(42)
 #Rotating to the left
 DIRECTIONS = list(map(np.array,[[1,0],[0,-1],[-1,0],[0,1]]))
 
-DENSITY = {"norriture": 0.5, "linemate": 0.3, "deraumere": 0.15, "sibur": 0.1, "mendiane":0.1, "phiras": 0.08, "thystame": 0.05}
+DENSITY = {"nourriture": 0.5, "linemate": 0.3, "deraumere": 0.15, "sibur": 0.1, "mendiane":0.1, "phiras": 0.08, "thystame": 0.05}
 
 class Game():
 
@@ -23,7 +23,7 @@ class Game():
         self.objects = [[[] for y in range(self.y)] for x in range(self.x)]
         self.initial_fill()
         self.level = 1
-        self.inventory ={"norriture": 10, "linemate": 0, "deraumere": 0, "sibur": 0, "mendiane": 0, "phiras": 0, "thystame": 0}
+        self.inventory ={"nourriture": 10, "linemate": 0, "deraumere": 0, "sibur": 0, "mendiane": 0, "phiras": 0, "thystame": 0}
         self.team = None
 
     

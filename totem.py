@@ -19,6 +19,7 @@ def mark_totem_gen(agent: Agent, resource: str)-> Action:
             break
     if size >= agent.totem_size and len(position) > 0 and size > 0 and agent.inventory[resource]>=1:
         plan = move_to(position[0], agent) & gen_basic("pose", resource) & LOGIC(lambda x:update_mark(agent,resource)) & gen_basic("voir")
+        print(f"Planning to set Totem at {position[0]}")
         return plan
     return LOGIC(lambda x: False)
 
@@ -26,4 +27,5 @@ def mark_totem_gen(agent: Agent, resource: str)-> Action:
 def update_mark(agent:Agent, resource):
     agent.totem_size, w = biggest_pile(agent, resource)
     agent.totem_pos = w[0]
+    print(f"evaluated totem position at {agent.totem_pos}")
     return True

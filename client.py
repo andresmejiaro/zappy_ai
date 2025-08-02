@@ -5,7 +5,7 @@ from Agent import Agent
 import numpy as np
 from ActionTree import  GEN
 from behavior import find_food_if_hungry, lucky_stone, mark_totem
-from action_generators import gen_basic, roam
+from action_generators import gen_basic, roam, level_up
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Zappy Client!!!", add_help=False)
@@ -23,7 +23,7 @@ def parse_args():
 def main():
     args = parse_args()
     agent = Agent(args)
-    plan = find_food_if_hungry |  mark_totem | lucky_stone | GEN(lambda x: roam(x))
+    plan = find_food_if_hungry | lucky_stone | mark_totem | GEN(level_up) | GEN(lambda x: roam(x))
     orc = Orchester(agent,plan)
     orc.main_loop(args)
 

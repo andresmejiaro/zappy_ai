@@ -96,6 +96,19 @@ class GEN(Action):
         return w        
 
 
+class MSG(Action):
+    def __init__(self, message, nxt = "and"):
+        self.message = message
+        self.nxt = nxt
+
+    def run(self, object):
+        print(self.message)
+        if self.nxt == "and":
+            return Status.S
+        if self.nxt == "or":
+            return Status.F
+ 
+
 # class GEN(Action):
 #     def __init__(self, generator):
 #         self.generator = generator

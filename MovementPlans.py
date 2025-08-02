@@ -61,8 +61,8 @@ def move_to(target: np.array, agent:Agent) -> Action:
         target7 = target - DIRECTIONS[0] * agent.size[0] + DIRECTIONS[1] * agent.size[1]
         target8 = target - DIRECTIONS[0] * agent.size[0] - DIRECTIONS[1] * agent.size[1]
         targets = [target, target1, target2,target3, target4, target5, target6, target7, target8]
-        target = shorstest_vect(targets)
-        displacement = target - position
+        targets = list(map(lambda x: x - position, targets))
+        displacement = shorstest_vect(targets) 
         if np.linalg.norm(displacement) == 0:
              return LOGIC(lambda x: True)  
         plan = []

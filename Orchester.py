@@ -1,4 +1,5 @@
 import socket
+import select
 
 from Agent import Agent
 from ActionTree import Action, Status
@@ -18,6 +19,7 @@ class Orchester():
             if len(temp) == 0:
                 self.partial_msg = b''
                 break
+            
             self.agent.command(temp[0].decode("utf-8"))
             if len(temp) == 1:
                 self.partial_msg = b''
@@ -31,16 +33,18 @@ class Orchester():
         #try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
                 client.connect((args.h, args.p))
+                client.setblocking(False)
                 while True:
-                    if not args.random:
+                    readable, _, _ = select.select([client],[],[],0)
+                    if not args.random and readable:
                         input = client.recv(16)
                         if not input:
                             break
                     else:
-                        input = ""
+                        input = b""
                     self.process_input(input)
                     self.agent.food_update()
-                    if self.agent.inventory["norriture"] <= 0:
+                    if self.agent.inventory["nourriture"] <= 0:
                         print("Dude u ded")
                         break
                     if  self.agent.starting >= 3:
@@ -49,8 +53,9 @@ class Orchester():
                     #     print("Lo Logre!")
                     #     break
                     message = self.agent.generate_message(args)
-                    print(f"sending message {message}")
-                    client.sendall((message + '\n').encode())
+                    if len(message) > 0:
+                        print(f"sending message: {message}")
+                        client.sendall((message + '\n').encode())
         #except ConnectionRefusedError:
         #    print("Server is down. Unable to connect.")
         #except Exception as e:
