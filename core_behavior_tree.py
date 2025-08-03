@@ -8,7 +8,7 @@ class Status(Enum):
     O = 0
     
 
-class Action(ABC):
+class BTNode(ABC):
 
     @abstractmethod
     def run(self, object):
@@ -33,8 +33,8 @@ class Action(ABC):
         return NOT(self)
 
 
-class AND(Action):
-    def __init__(self, A1:Action, A2: Action):
+class AND(BTNode):
+    def __init__(self, A1:BTNode, A2: BTNode):
         self.A1 = A1
         self.A2 = A2
     
@@ -46,9 +46,8 @@ class AND(Action):
         else:
             return w
 
-
-class OR(Action):
-    def __init__(self, A1:Action, A2: Action):
+class OR(BTNode):
+    def __init__(self, A1:BTNode, A2: BTNode):
         self.A1 = A1
         self.A2 = A2
     
@@ -58,9 +57,8 @@ class OR(Action):
             return self.A2.run(object)        
         return w
 
-
-class NOT(Action):
-    def __init__(self, A1:Action):
+class NOT(BTNode):
+    def __init__(self, A1:BTNode):
         self.A1 = A1
 
     def run(self, object):
@@ -71,8 +69,7 @@ class NOT(Action):
             return Status.F
         return w 
 
-
-class LOGIC(Action):
+class LOGIC(BTNode):
     def __init__(self, fun):
         self.fun = fun
  
@@ -81,22 +78,26 @@ class LOGIC(Action):
             return Status.S
         return Status.F
         
-
-class GEN(Action):
-    def __init__(self, generator):
+class GEN(BTNode):
+    def __init__(self, generator, sticky = False):
         self.generator = generator
         self.plan = None
-
+        self.sticky = sticky
+        self.sticky_result = None
     def run(self, object):
         if self.plan is None:
             self.plan = self.generator(object)
+        if self.sticky and self.sticky_result is not None:
+            return self.sticky_result      
         w = self.plan.run(object)
         if w in [Status.S, Status.F]:
-            self.plan = None
+            if not self.sticky:
+                self.plan = None
+            else:
+                self.sticky_result = w
         return w        
 
-
-class MSG(Action):
+class MSG(BTNode):
     def __init__(self, message, nxt = "and"):
         self.message = message
         self.nxt = nxt
@@ -108,21 +109,29 @@ class MSG(Action):
         if self.nxt == "or":
             return Status.F
  
+class GATE(BTNode):
+    """
+    Boolean guard
 
-# class GEN(Action):
-#     def __init__(self, generator):
-#         self.generator = generator
-#         self.plan = None
+    * It takes open and close conditions in the constructor
+    * If the door is closed checks open condition to open it and allow flow via &
+    * If the door is open checks closed condition to close the door if necessary
 
-#     def status(self, object):
-#         if self.plan is None:
-#             return Status.O
-#         w = self.plan.status(object)
-#         if w in [Status.F, Status.S]:
-#             self.plan = None
-#         return w
+    If the door is open it returns Status.S else Status.F
+    """
+    def __init__(self, open_cond, close_cond):
+        self._open = False
+        self.open_cond = open_cond
+        self.close_cond = close_cond
 
-#     def run(self, object):
-#         if self.plan is None:
-#             self.plan = self.generator(object)
-#         self.plan.run(object)        
+    def run(self, object):
+        if not self._open and self.open_cond(object):
+            self._open = True
+            return Status.S
+        if not self._open and not self.open_cond(object):
+            return Status.F
+        if self._open and self.close_cond(object):
+            self._open = False
+            return Status.F
+        return Status.S
+        

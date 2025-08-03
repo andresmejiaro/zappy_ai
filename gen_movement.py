@@ -1,14 +1,15 @@
-#%%from BasicAction import Basic
-from ActionTree import Action, LOGIC
-from BasicAction import Basic
-from Agent import Agent
+#%%from BasicAction import Interaction
+from core_behavior_tree import BTNode, LOGIC
+from core_bt_interactions import Interaction
+from domain_agent import Agent
 import numpy as np
 from functools import  reduce
+import random 
 
 DIRECTIONS = list(map(np.array,[[1,0],[0,-1],[-1,0],[0,1]]))
 
 #%%
-def rotate_create(facing:int, rtarget: int)->list[Action]:
+def rotate_create(facing:int, rtarget: int)->list[BTNode]:
     facing = facing % 4
     rtarget = rtarget % 4
     
@@ -21,9 +22,9 @@ def rotate_create(facing:int, rtarget: int)->list[Action]:
     if c1 == 0:
         return []
     if c1 > 0:
-         return list(map(lambda x: Basic("gauche"), range(c2)))   
+         return list(map(lambda x: Interaction("gauche"), range(c2)))   
     if c1 < 0:
-         return list(map(lambda x: Basic("droite"), range(c2)))   
+         return list(map(lambda x: Interaction("droite"), range(c2)))   
         
      
 #%%
@@ -32,23 +33,8 @@ def shorstest_vect(array):
     indmin = np.argmin(indmin)
     return array [indmin]
 
-def route_torus(position,target,agent):
-    target1 = position - target + DIRECTIONS[0] * agent.size[0]
-    target2 = position - target - DIRECTIONS[0] * agent.size[0]
-    target3 = position - target + DIRECTIONS[1] * agent.size[1]
-    target4 = position - target - DIRECTIONS[1] * agent.size[1]
-    target5 = position - target + DIRECTIONS[0] * agent.size[0] + DIRECTIONS[1] * agent.size[1]
-    target6 = position - target + DIRECTIONS[0] * agent.size[0] - DIRECTIONS[1] * agent.size[1]
-    target7 = position - target - DIRECTIONS[0] * agent.size[0] + DIRECTIONS[1] * agent.size[1]
-    target8 = position - target - DIRECTIONS[0] * agent.size[0] - DIRECTIONS[1] * agent.size[1]
-    targets = [position - target, target1, target2,target3, target4, target5, target6, target7, target8]
-    displacement = shorstest_vect(targets)
-    return displacement
 
-
-
-
-def move_to(target: np.array, agent:Agent) -> Action:
+def move_to(target: np.array, agent:Agent) -> BTNode:
         print(f"moving to: {target}")
         facing = agent.facing
         position = agent.pos
@@ -76,7 +62,7 @@ def move_to(target: np.array, agent:Agent) -> Action:
             xfacing = 2   
        
         nmoves = np.abs(displacement[0])
-        w = map(lambda x: Basic("avance"), range(nmoves))
+        w = map(lambda x: Interaction("avance"), range(nmoves))
         plan.extend(w)
 
         ### movement in y
@@ -86,17 +72,16 @@ def move_to(target: np.array, agent:Agent) -> Action:
             plan += rotate_create(xfacing,1)
         
         nmoves = np.abs(displacement[1])
-        w = map(lambda x: Basic("avance"), range(nmoves))
+        w = map(lambda x: Interaction("avance"), range(nmoves))
         plan.extend(w)
 
         return reduce( lambda x,y: x & y, plan)
 
-
-
-
-
-
-
-        
-
-
+def roam(agent: Agent):
+    r = Interaction("voir") & Interaction("droite") & Interaction("voir") & Interaction("droite") & Interaction("voir") & Interaction("droite") & Interaction("voir") 
+    nt = random.randint(0,3)
+    for j in range(nt):
+        r = r & Interaction("droite")
+    for j in range(2*agent.level - 2 + random.randint(0,3)):
+        r = r & Interaction("avance")
+    return r

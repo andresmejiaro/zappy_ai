@@ -1,11 +1,12 @@
 import argparse
-from Orchester import Orchester
-from BasicAction import Basic
-from Agent import Agent
+from infra_orchestrator import Orchester
+from core_bt_interactions import Interaction
+from domain_agent import Agent
 import numpy as np
-from ActionTree import  GEN
-from behavior import find_food_if_hungry, lucky_stone, mark_totem
-from action_generators import gen_basic, roam, level_up
+from core_behavior_tree import  GEN
+from gen_movement import roam
+from gen_levelup import level_up
+from plan_master import master_plan
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Zappy Client!!!", add_help=False)
@@ -15,15 +16,13 @@ def parse_args():
                         help="Team name", required = True)
     parser.add_argument("-h", type=str,
                         default="localhost", help="host")
-    parser.add_argument("-random", action="store_true",
-                        help="Sends random commands to the server for testing purposes")
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
     agent = Agent(args)
-    plan = find_food_if_hungry | lucky_stone | mark_totem | GEN(level_up) | GEN(lambda x: roam(x))
+    plan = master_plan
     orc = Orchester(agent,plan)
     orc.main_loop(args)
 

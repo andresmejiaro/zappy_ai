@@ -1,8 +1,6 @@
 import time
-from objects import commands_single, commands_object, commands_text, objects
 import random
 import numpy as np
-from ActionTree import Status
 
 random.seed(42)
 
@@ -10,21 +8,6 @@ random.seed(42)
 #Rotating to the left
 DIRECTIONS = list(map(np.array,[[1,0],[0,-1],[-1,0],[0,1]]))
 
-def generate_random_message():
-    if not hasattr(generate_random_message, "weights"):
-        generate_random_message.weights = [len(commands_single), len(commands_object), len(commands_text)]
-        generate_random_message.tot_weight = sum(generate_random_message.weights)
-    random_n = random.randint(0,generate_random_message.tot_weight - 1)
-    if random_n < generate_random_message.weights[0]:
-        return commands_single[random_n]
-    random_n -= generate_random_message.weights[0]
-    if random_n < generate_random_message.weights[1]:
-        random_n2 = random.randint(0, len(objects) - 1)
-        return commands_object[random_n] + ' ' + objects[random_n2]
-    random_n -= generate_random_message.weights[1]
-    if random_n < generate_random_message.weights[2]:
-        random_n2 = random.randint(0, 9999)
-        return commands_text[random_n] + ' ' + str(hash(random_n2))
 
 
 class Agent():
@@ -46,6 +29,7 @@ class Agent():
         self.last_turn = 0
         self.basket = []
         self.totem_pos = np.array([0,0])
+        self.totem_old = self.totem_pos
         self.totem_size = 0
         self.inventory_group = self.inventory
         self.objects_countdown = None
@@ -103,6 +87,9 @@ class Agent():
                 for y in range(self.size[1]):
                     if breaks[x,y]:
                         self.objects[x][y] = []
+                    if np.array_equal(self.totem_pos,np.array([x,y])):
+                        if len(self.objects[x][y]) != 0:
+                            self.totem_size = self.objects[x][y].count("linemate")
 
     def avance_processer(self, command, x= None):
         print(f"Old position: {self.pos}")
@@ -279,22 +266,9 @@ class Agent():
 
 
     def generate_message(self, args)->str:
-        if args.random:
-            time.sleep(1)
-            return generate_random_message()
         if len(self.unsent_commands) > 0 and len(self.running_routine) < 10:
             y = self.unsent_commands.pop(0)
             return y
         else:
             return ""
 
-
-    # def update_Agent(self,msg: str):
-    #     func = msg.split(maxsplit=2)
-    #     if func[0] in self.updater.keys():
-    #         self.updater[func[0]](func[1])
-    #     else:
-    #         print(f"Command {func[0]} in {msg} not found skipping")
-
-    # updater = {}
-    #updater = {"avance", "droite", "gauche", "voir", "inventaire", "expulse", "incantation", "fork", "connect_nbr","prend", "pose","broadcast"}

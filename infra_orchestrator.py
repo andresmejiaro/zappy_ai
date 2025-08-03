@@ -1,12 +1,12 @@
 import socket
 import select
 
-from Agent import Agent
-from ActionTree import Action, Status
+from domain_agent import Agent
+from core_behavior_tree import BTNode, Status
 
 class Orchester():
 
-    def __init__(self, agent: Agent, plan: Action):
+    def __init__(self, agent: Agent, plan: BTNode):
         self.partial_msg = b''
         self.agent = agent
         self.plan = plan
@@ -36,7 +36,7 @@ class Orchester():
                 client.setblocking(False)
                 while True:
                     readable, _, _ = select.select([client],[],[],0)
-                    if not args.random and readable:
+                    if readable:
                         input = client.recv(16)
                         if not input:
                             break

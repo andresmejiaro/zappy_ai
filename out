@@ -1,0 +1,723 @@
+Recieved command: BIENVENUE
+sending message: pollo
+Recieved command: 8
+Recieved command: 10 10
+Planning to set Totem at [0 0]
+sending message: voir
+Recieved command: {,linemate,nourriture linemate phiras,}
+voir {,linemate,nourriture linemate phiras,}
+food: 9.944444444444445
+sending message: droite
+Recieved command: ok
+Old facing: [1 0]
+New facing: [0 1]
+food: 9.88888888888889
+sending message: voir
+Recieved command: {,,nourriture nourriture,}
+voir {,,nourriture nourriture,}
+food: 9.833333333333334
+sending message: droite
+Recieved command: ok
+Old facing: [0 1]
+New facing: [-1  0]
+food: 9.777777777777779
+sending message: voir
+Recieved command: {,,nourriture deraumere mendiane phiras,}
+voir {,,nourriture deraumere mendiane phiras,}
+food: 9.722222222222223
+sending message: droite
+Recieved command: ok
+Old facing: [-1  0]
+New facing: [ 0 -1]
+food: 9.666666666666668
+sending message: voir
+Recieved command: {,,nourriture,linemate}
+voir {,,nourriture,linemate}
+food: 9.611111111111112
+sending message: voir
+Recieved command: {,,nourriture,linemate}
+voir {,,nourriture,linemate}
+food: 9.555555555555557
+sending message: droite
+Recieved command: ok
+Old facing: [ 0 -1]
+New facing: [1 0]
+food: 9.500000000000002
+sending message: voir
+Recieved command: {,linemate,nourriture linemate phiras,}
+voir {,linemate,nourriture linemate phiras,}
+food: 9.444444444444446
+sending message: droite
+Recieved command: ok
+Old facing: [1 0]
+New facing: [0 1]
+food: 9.388888888888891
+sending message: voir
+Recieved command: {,,nourriture nourriture,}
+voir {,,nourriture nourriture,}
+food: 9.333333333333336
+sending message: droite
+Recieved command: ok
+Old facing: [0 1]
+New facing: [-1  0]
+food: 9.27777777777778
+sending message: voir
+Recieved command: {,,nourriture deraumere mendiane phiras,}
+voir {,,nourriture deraumere mendiane phiras,}
+food: 9.222222222222225
+sending message: voir
+Recieved command: {,,nourriture deraumere mendiane phiras,}
+voir {,,nourriture deraumere mendiane phiras,}
+food: 9.16666666666667
+sending message: droite
+Recieved command: ok
+Old facing: [-1  0]
+New facing: [ 0 -1]
+food: 9.111111111111114
+sending message: voir
+Recieved command: {,,nourriture,linemate}
+voir {,,nourriture,linemate}
+food: 9.055555555555559
+sending message: droite
+Recieved command: ok
+Old facing: [ 0 -1]
+New facing: [1 0]
+food: 9.000000000000004
+sending message: voir
+Recieved command: {,linemate,nourriture linemate phiras,}
+voir {,linemate,nourriture linemate phiras,}
+food: 8.944444444444448
+sending message: droite
+Recieved command: ok
+Old facing: [1 0]
+New facing: [0 1]
+food: 8.888888888888893
+sending message: voir
+Recieved command: {,,nourriture nourriture,}
+voir {,,nourriture nourriture,}
+food: 8.833333333333337
+sending message: droite
+Recieved command: ok
+Old facing: [0 1]
+New facing: [-1  0]
+food: 8.777777777777782
+sending message: droite
+Recieved command: ok
+Old facing: [-1  0]
+New facing: [ 0 -1]
+food: 8.722222222222227
+sending message: droite
+Recieved command: ok
+Old facing: [ 0 -1]
+New facing: [1 0]
+food: 8.666666666666671
+sending message: avance
+Recieved command: ok
+Old position: [0 0]
+New position: [1 0]
+food: 8.611111111111116
+sending message: avance
+Recieved command: ok
+Old position: [1 0]
+New position: [2 0]
+food: 8.55555555555556
+sending message: voir
+Recieved command: {,sibur,nourriture thystame,linemate}
+voir {,sibur,nourriture thystame,linemate}
+food: 8.500000000000005
+sending message: droite
+Recieved command: ok
+Old facing: [1 0]
+New facing: [0 1]
+food: 8.44444444444445
+sending message: voir
+Recieved command: {,linemate,,}
+voir {,linemate,,}
+food: 8.388888888888895
+sending message: droite
+Recieved command: ok
+Old facing: [0 1]
+New facing: [-1  0]
+food: 8.33333333333334
+sending message: voir
+Recieved command: {,,nourriture linemate phiras,linemate}
+voir {,,nourriture linemate phiras,linemate}
+food: 8.277777777777784
+sending message: droite
+Recieved command: ok
+Old facing: [-1  0]
+New facing: [ 0 -1]
+food: 8.222222222222229
+sending message: voir
+Recieved command: {,linemate,egg nourriture mendiane,sibur}
+voir {,linemate,egg nourriture mendiane,sibur}
+food: 8.166666666666673
+sending message: avance
+Recieved command: ok
+Old position: [2 0]
+New position: [2 9]
+food: 8.111111111111118
+sending message: avance
+Recieved command: ok
+Old position: [2 9]
+New position: [2 8]
+food: 8.055555555555562
+sending message: avance
+Recieved command: ok
+Old position: [2 8]
+New position: [2 7]
+food: 8.000000000000007
+sending message: voir
+Recieved command: {,nourriture,phiras,nourriture linemate}
+voir {,nourriture,phiras,nourriture linemate}
+food: 7.944444444444452
+sending message: droite
+Recieved command: ok
+Old facing: [ 0 -1]
+New facing: [1 0]
+food: 7.888888888888896
+sending message: voir
+Recieved command: {,nourriture linemate,nourriture linemate,nourriture}
+voir {,nourriture linemate,nourriture linemate,nourriture}
+food: 7.833333333333341
+sending message: droite
+Recieved command: ok
+Old facing: [1 0]
+New facing: [0 1]
+food: 7.777777777777786
+sending message: voir
+Recieved command: {,nourriture,nourriture nourriture linemate,nourriture}
+voir {,nourriture,nourriture nourriture linemate,nourriture}
+food: 7.72222222222223
+sending message: droite
+Recieved command: ok
+Old facing: [0 1]
+New facing: [-1  0]
+food: 7.666666666666675
+sending message: voir
+Recieved command: {,nourriture,nourriture linemate,nourriture}
+voir {,nourriture,nourriture linemate,nourriture}
+food: 7.61111111111112
+sending message: droite
+Recieved command: ok
+Old facing: [-1  0]
+New facing: [ 0 -1]
+food: 7.555555555555564
+sending message: avance
+Recieved command: ok
+Old position: [2 7]
+New position: [2 6]
+food: 7.500000000000009
+sending message: avance
+Recieved command: ok
+Old position: [2 6]
+New position: [2 5]
+food: 7.4444444444444535
+sending message: voir
+Recieved command: {deraumere,linemate deraumere,egg nourriture nourriture deraumere mendiane thystame,deraumere}
+voir {deraumere,linemate deraumere,egg nourriture nourriture deraumere mendiane thystame,deraumere}
+food: 7.388888888888898
+sending message: droite
+Recieved command: ok
+Old facing: [ 0 -1]
+New facing: [1 0]
+food: 7.333333333333343
+sending message: voir
+Recieved command: {deraumere,deraumere,nourriture,nourriture linemate}
+voir {deraumere,deraumere,nourriture,nourriture linemate}
+food: 7.2777777777777874
+sending message: droite
+Recieved command: ok
+Old facing: [1 0]
+New facing: [0 1]
+food: 7.222222222222232
+sending message: voir
+Recieved command: {deraumere,nourriture linemate,phiras,nourriture}
+voir {deraumere,nourriture linemate,phiras,nourriture}
+food: 7.166666666666677
+sending message: droite
+Recieved command: ok
+Old facing: [0 1]
+New facing: [-1  0]
+food: 7.111111111111121
+sending message: voir
+Recieved command: {deraumere,nourriture,linemate sibur mendiane,linemate deraumere}
+voir {deraumere,nourriture,linemate sibur mendiane,linemate deraumere}
+food: 7.055555555555566
+sending message: avance
+Recieved command: ok
+Old position: [2 5]
+New position: [1 5]
+food: 7.000000000000011
+sending message: voir
+Recieved command: {linemate sibur mendiane,,linemate linemate sibur,linemate mendiane mendiane}
+voir {linemate sibur mendiane,,linemate linemate sibur,linemate mendiane mendiane}
+food: 6.944444444444455
+sending message: droite
+Recieved command: ok
+Old facing: [-1  0]
+New facing: [ 0 -1]
+food: 6.8888888888889
+sending message: voir
+Recieved command: {linemate sibur mendiane,linemate mendiane mendiane,linemate deraumere,egg nourriture nourriture deraumere mendiane thystame}
+voir {linemate sibur mendiane,linemate mendiane mendiane,linemate deraumere,egg nourriture nourriture deraumere mendiane thystame}
+food: 6.833333333333345
+sending message: droite
+Recieved command: ok
+Old facing: [ 0 -1]
+New facing: [1 0]
+food: 6.777777777777789
+sending message: voir
+Recieved command: {linemate sibur mendiane,egg nourriture nourriture deraumere mendiane thystame,deraumere,phiras}
+voir {linemate sibur mendiane,egg nourriture nourriture deraumere mendiane thystame,deraumere,phiras}
+food: 6.722222222222234
+sending message: droite
+Recieved command: ok
+Old facing: [1 0]
+New facing: [0 1]
+food: 6.6666666666666785
+sending message: voir
+Recieved command: {linemate sibur mendiane,phiras,nourriture,}
+voir {linemate sibur mendiane,phiras,nourriture,}
+food: 6.611111111111123
+sending message: avance
+Recieved command: ok
+Old position: [1 5]
+New position: [1 6]
+food: 6.555555555555568
+sending message: voir
+Recieved command: {nourriture,,nourriture linemate,linemate}
+voir {nourriture,,nourriture linemate,linemate}
+food: 6.500000000000012
+sending message: droite
+Recieved command: ok
+Old facing: [0 1]
+New facing: [-1  0]
+food: 6.444444444444457
+sending message: voir
+Recieved command: {nourriture,linemate,,linemate linemate sibur}
+voir {nourriture,linemate,,linemate linemate sibur}
+food: 6.388888888888902
+sending message: droite
+Recieved command: ok
+Old facing: [-1  0]
+New facing: [ 0 -1]
+food: 6.333333333333346
+sending message: voir
+Recieved command: {nourriture,linemate linemate sibur,linemate sibur mendiane,deraumere}
+voir {nourriture,linemate linemate sibur,linemate sibur mendiane,deraumere}
+food: 6.277777777777791
+sending message: droite
+Recieved command: ok
+Old facing: [ 0 -1]
+New facing: [1 0]
+food: 6.222222222222236
+sending message: voir
+Recieved command: {nourriture,deraumere,phiras,}
+voir {nourriture,deraumere,phiras,}
+food: 6.16666666666668
+sending message: droite
+Recieved command: ok
+Old facing: [1 0]
+New facing: [0 1]
+food: 6.111111111111125
+sending message: droite
+Recieved command: ok
+Old facing: [0 1]
+New facing: [-1  0]
+food: 6.05555555555557
+sending message: droite
+Recieved command: ok
+Old facing: [-1  0]
+New facing: [ 0 -1]
+food: 6.000000000000014
+sending message: avance
+Recieved command: ok
+Old position: [1 6]
+New position: [1 5]
+food: 5.944444444444459
+sending message: avance
+Recieved command: ok
+Old position: [1 5]
+New position: [1 4]
+food: 5.8888888888889035
+sending message: avance
+Recieved command: ok
+Old position: [1 4]
+New position: [1 3]
+food: 5.833333333333348
+sending message: voir
+Recieved command: {,thystame,linemate,mendiane}
+voir {,thystame,linemate,mendiane}
+food: 5.777777777777793
+sending message: droite
+Recieved command: ok
+Old facing: [ 0 -1]
+New facing: [1 0]
+food: 5.722222222222237
+sending message: voir
+Recieved command: {,mendiane,egg nourriture phiras,egg nourriture nourriture deraumere mendiane thystame}
+voir {,mendiane,egg nourriture phiras,egg nourriture nourriture deraumere mendiane thystame}
+food: 5.666666666666682
+sending message: droite
+Recieved command: ok
+Old facing: [1 0]
+New facing: [0 1]
+food: 5.611111111111127
+sending message: voir
+Recieved command: {,egg nourriture nourriture deraumere mendiane thystame,linemate deraumere,linemate mendiane mendiane}
+voir {,egg nourriture nourriture deraumere mendiane thystame,linemate deraumere,linemate mendiane mendiane}
+food: 5.555555555555571
+sending message: droite
+Recieved command: ok
+Old facing: [0 1]
+New facing: [-1  0]
+food: 5.500000000000016
+sending message: voir
+Recieved command: {,linemate mendiane mendiane,egg deraumere,thystame}
+voir {,linemate mendiane mendiane,egg deraumere,thystame}
+food: 5.444444444444461
+sending message: voir
+Recieved command: {,linemate mendiane mendiane,egg deraumere,thystame}
+voir {,linemate mendiane mendiane,egg deraumere,thystame}
+food: 5.388888888888905
+sending message: droite
+Recieved command: ok
+Old facing: [-1  0]
+New facing: [ 0 -1]
+food: 5.33333333333335
+sending message: voir
+Recieved command: {,thystame,linemate,mendiane}
+voir {,thystame,linemate,mendiane}
+food: 5.2777777777777946
+sending message: droite
+Recieved command: ok
+Old facing: [ 0 -1]
+New facing: [1 0]
+food: 5.222222222222239
+sending message: voir
+Recieved command: {,mendiane,egg nourriture phiras,egg nourriture nourriture deraumere mendiane thystame}
+voir {,mendiane,egg nourriture phiras,egg nourriture nourriture deraumere mendiane thystame}
+food: 5.166666666666684
+sending message: droite
+Recieved command: ok
+Old facing: [1 0]
+New facing: [0 1]
+food: 5.1111111111111285
+sending message: voir
+Recieved command: {,egg nourriture nourriture deraumere mendiane thystame,linemate deraumere,linemate mendiane mendiane}
+voir {,egg nourriture nourriture deraumere mendiane thystame,linemate deraumere,linemate mendiane mendiane}
+food: 5.055555555555573
+sending message: droite
+Recieved command: ok
+Old facing: [0 1]
+New facing: [-1  0]
+food: 5.000000000000018
+sending message: droite
+Recieved command: ok
+Old facing: [-1  0]
+New facing: [ 0 -1]
+food: 4.944444444444462
+sending message: voir
+Recieved command: {,thystame,linemate,mendiane}
+voir {,thystame,linemate,mendiane}
+food: 4.888888888888907
+sending message: droite
+Recieved command: ok
+Old facing: [ 0 -1]
+New facing: [1 0]
+food: 4.833333333333352
+sending message: voir
+Recieved command: {,mendiane,egg nourriture phiras,egg nourriture nourriture deraumere mendiane thystame}
+voir {,mendiane,egg nourriture phiras,egg nourriture nourriture deraumere mendiane thystame}
+food: 4.777777777777796
+sending message: droite
+Recieved command: ok
+Old facing: [1 0]
+New facing: [0 1]
+food: 4.722222222222241
+sending message: voir
+Recieved command: {,egg nourriture nourriture deraumere mendiane thystame,linemate deraumere,linemate mendiane mendiane}
+voir {,egg nourriture nourriture deraumere mendiane thystame,linemate deraumere,linemate mendiane mendiane}
+food: 4.666666666666686
+sending message: droite
+Recieved command: ok
+Old facing: [0 1]
+New facing: [-1  0]
+food: 4.61111111111113
+sending message: voir
+Recieved command: {,linemate mendiane mendiane,egg deraumere,thystame}
+voir {,linemate mendiane mendiane,egg deraumere,thystame}
+food: 4.555555555555575
+sending message: droite
+Recieved command: ok
+Old facing: [-1  0]
+New facing: [ 0 -1]
+food: 4.5000000000000195
+sending message: droite
+Recieved command: ok
+Old facing: [ 0 -1]
+New facing: [1 0]
+food: 4.444444444444464
+sending message: avance
+Recieved command: ok
+Old position: [1 3]
+New position: [2 3]
+food: 4.388888888888909
+sending message: voir
+Recieved command: {egg nourriture phiras,nourriture nourriture deraumere,nourriture,deraumere}
+voir {egg nourriture phiras,nourriture nourriture deraumere,nourriture,deraumere}
+food: 4.3333333333333535
+sending message: droite
+Recieved command: ok
+Old facing: [1 0]
+New facing: [0 1]
+food: 4.277777777777798
+sending message: voir
+Recieved command: {egg nourriture phiras,deraumere,egg nourriture nourriture deraumere mendiane thystame,linemate deraumere}
+voir {egg nourriture phiras,deraumere,egg nourriture nourriture deraumere mendiane thystame,linemate deraumere}
+food: 4.222222222222243
+sending message: droite
+Recieved command: ok
+Old facing: [0 1]
+New facing: [-1  0]
+food: 4.166666666666687
+sending message: voir
+Recieved command: {egg nourriture phiras,linemate deraumere,,linemate}
+voir {egg nourriture phiras,linemate deraumere,,linemate}
+food: 4.111111111111132
+sending message: droite
+Recieved command: ok
+Old facing: [-1  0]
+New facing: [ 0 -1]
+food: 4.055555555555577
+sending message: voir
+Recieved command: {egg nourriture phiras,linemate,mendiane,nourriture nourriture deraumere}
+voir {egg nourriture phiras,linemate,mendiane,nourriture nourriture deraumere}
+food: 4.000000000000021
+sending message: avance
+Recieved command: ok
+Old position: [2 3]
+New position: [2 2]
+food: 3.944444444444466
+sending message: avance
+Recieved command: ok
+Old position: [2 2]
+New position: [2 1]
+food: 3.8888888888889106
+sending message: voir
+Recieved command: {,nourriture linemate phiras,,nourriture thystame}
+voir {,nourriture linemate phiras,,nourriture thystame}
+food: 3.8333333333333552
+sending message: droite
+Recieved command: ok
+Old facing: [ 0 -1]
+New facing: [1 0]
+food: 3.7777777777778
+sending message: voir
+Recieved command: {,nourriture thystame,linemate,nourriture nourriture deraumere}
+voir {,nourriture thystame,linemate,nourriture nourriture deraumere}
+food: 3.7222222222222445
+sending message: droite
+Recieved command: ok
+Old facing: [1 0]
+New facing: [0 1]
+food: 3.666666666666689
+sending message: voir
+Recieved command: {,nourriture nourriture deraumere,mendiane,linemate}
+voir {,nourriture nourriture deraumere,mendiane,linemate}
+food: 3.611111111111134
+sending message: droite
+Recieved command: ok
+Old facing: [0 1]
+New facing: [-1  0]
+food: 3.5555555555555785
+sending message: voir
+Recieved command: {,linemate,,nourriture linemate phiras}
+voir {,linemate,,nourriture linemate phiras}
+food: 3.500000000000023
+sending message: droite
+Recieved command: ok
+Old facing: [-1  0]
+New facing: [ 0 -1]
+food: 3.4444444444444677
+sending message: droite
+Recieved command: ok
+Old facing: [ 0 -1]
+New facing: [1 0]
+food: 3.3888888888889124
+sending message: droite
+Recieved command: ok
+Old facing: [1 0]
+New facing: [0 1]
+food: 3.333333333333357
+sending message: voir
+Recieved command: {,nourriture nourriture deraumere,mendiane,linemate}
+voir {,nourriture nourriture deraumere,mendiane,linemate}
+food: 3.2777777777778017
+sending message: droite
+Recieved command: ok
+Old facing: [0 1]
+New facing: [-1  0]
+food: 3.2222222222222463
+sending message: voir
+Recieved command: {,linemate,,nourriture linemate phiras}
+voir {,linemate,,nourriture linemate phiras}
+food: 3.166666666666691
+sending message: droite
+Recieved command: ok
+Old facing: [-1  0]
+New facing: [ 0 -1]
+food: 3.1111111111111356
+sending message: voir
+Recieved command: {,nourriture linemate phiras,,nourriture thystame}
+voir {,nourriture linemate phiras,,nourriture thystame}
+food: 3.0555555555555802
+sending message: droite
+Recieved command: ok
+Old facing: [ 0 -1]
+New facing: [1 0]
+food: 3.000000000000025
+sending message: voir
+Recieved command: {,nourriture thystame,linemate,nourriture nourriture deraumere}
+voir {,nourriture thystame,linemate,nourriture nourriture deraumere}
+food: 2.9444444444444695
+sending message: droite
+Recieved command: ok
+Old facing: [1 0]
+New facing: [0 1]
+food: 2.888888888888914
+sending message: avance
+Recieved command: ok
+Old position: [2 1]
+New position: [2 2]
+food: 2.833333333333359
+sending message: avance
+Recieved command: ok
+Old position: [2 2]
+New position: [2 3]
+food: 2.7777777777778034
+sending message: voir
+Recieved command: {egg nourriture phiras,deraumere,egg nourriture nourriture deraumere mendiane thystame,linemate deraumere}
+voir {egg nourriture phiras,deraumere,egg nourriture nourriture deraumere mendiane thystame,linemate deraumere}
+food: 2.722222222222248
+sending message: droite
+Recieved command: ok
+Old facing: [0 1]
+New facing: [-1  0]
+food: 2.6666666666666927
+sending message: voir
+Recieved command: {egg nourriture phiras,linemate deraumere,,linemate}
+voir {egg nourriture phiras,linemate deraumere,,linemate}
+food: 2.6111111111111374
+sending message: droite
+Recieved command: ok
+Old facing: [-1  0]
+New facing: [ 0 -1]
+food: 2.555555555555582
+sending message: voir
+Recieved command: {egg nourriture phiras,linemate,mendiane,nourriture nourriture deraumere}
+voir {egg nourriture phiras,linemate,mendiane,nourriture nourriture deraumere}
+food: 2.5000000000000266
+sending message: droite
+Recieved command: ok
+Old facing: [ 0 -1]
+New facing: [1 0]
+food: 2.4444444444444713
+sending message: voir
+Recieved command: {egg nourriture phiras,nourriture nourriture deraumere,nourriture,deraumere}
+voir {egg nourriture phiras,nourriture nourriture deraumere,nourriture,deraumere}
+food: 2.388888888888916
+sending message: voir
+Recieved command: {egg nourriture phiras,nourriture nourriture deraumere,nourriture,deraumere}
+voir {egg nourriture phiras,nourriture nourriture deraumere,nourriture,deraumere}
+food: 2.3333333333333606
+sending message: droite
+Recieved command: ok
+Old facing: [1 0]
+New facing: [0 1]
+food: 2.277777777777805
+sending message: voir
+Recieved command: {egg nourriture phiras,deraumere,egg nourriture nourriture deraumere mendiane thystame,linemate deraumere}
+voir {egg nourriture phiras,deraumere,egg nourriture nourriture deraumere mendiane thystame,linemate deraumere}
+food: 2.22222222222225
+sending message: droite
+Recieved command: ok
+Old facing: [0 1]
+New facing: [-1  0]
+food: 2.1666666666666945
+sending message: voir
+Recieved command: {egg nourriture phiras,linemate deraumere,,linemate}
+voir {egg nourriture phiras,linemate deraumere,,linemate}
+food: 2.111111111111139
+sending message: droite
+Recieved command: ok
+Old facing: [-1  0]
+New facing: [ 0 -1]
+food: 2.055555555555584
+sending message: voir
+Recieved command: {egg nourriture phiras,linemate,mendiane,nourriture nourriture deraumere}
+voir {egg nourriture phiras,linemate,mendiane,nourriture nourriture deraumere}
+food: 2.0000000000000284
+sending message: droite
+Recieved command: ok
+Old facing: [ 0 -1]
+New facing: [1 0]
+food: 1.9444444444444728
+sending message: droite
+Recieved command: ok
+Old facing: [1 0]
+New facing: [0 1]
+food: 1.8888888888889173
+sending message: droite
+Recieved command: ok
+Old facing: [0 1]
+New facing: [-1  0]
+food: 1.8333333333333617
+sending message: avance
+Recieved command: ok
+Old position: [2 3]
+New position: [1 3]
+food: 1.777777777777806
+sending message: voir
+Recieved command: {,linemate mendiane mendiane,egg deraumere,thystame}
+voir {,linemate mendiane mendiane,egg deraumere,thystame}
+food: 1.7222222222222505
+sending message: droite
+Recieved command: ok
+Old facing: [-1  0]
+New facing: [ 0 -1]
+food: 1.666666666666695
+sending message: voir
+Recieved command: {,thystame,linemate,mendiane}
+voir {,thystame,linemate,mendiane}
+food: 1.6111111111111394
+sending message: droite
+Recieved command: ok
+Old facing: [ 0 -1]
+New facing: [1 0]
+food: 1.5555555555555838
+sending message: voir
+Recieved command: {,mendiane,egg nourriture phiras,egg nourriture nourriture deraumere mendiane thystame}
+voir {,mendiane,egg nourriture phiras,egg nourriture nourriture deraumere mendiane thystame}
+food: 1.5000000000000282
+sending message: droite
+Recieved command: ok
+Old facing: [1 0]
+New facing: [0 1]
+food: 1.4444444444444726
+sending message: voir
+Recieved command: {,egg nourriture nourriture deraumere mendiane thystame,linemate deraumere,linemate mendiane mendiane}
+voir {,egg nourriture nourriture deraumere mendiane thystame,linemate deraumere,linemate mendiane mendiane}
+food: 1.388888888888917
+sending message: voir
+Recieved command: {,egg nourriture nourriture deraumere mendiane thystame,linemate deraumere,linemate mendiane mendiane}
+voir {,egg nourriture nourriture deraumere mendiane thystame,linemate deraumere,linemate mendiane mendiane}
+food: 1.3333333333333615
+sending message: droite
+Recieved command: ok
+Old facing: [0 1]
+New facing: [-1  0]
+food: 1.2777777777778059
+sending message: voir
+Recieved command: mort
