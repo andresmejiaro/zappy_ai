@@ -36,9 +36,5 @@ class Basic(Action):
                 return Status.F
         return Status.F
    
-    # def status(self, object):
-    #     if self.status_ == Status.O:
-    #         self.status_ = self.check_status(object)
-    #     return self.status_
    
 
