@@ -37,16 +37,16 @@ class Orchester():
                 while True:
                     readable, _, _ = select.select([client],[],[],0)
                     if readable:
-                        input = client.recv(16)
+                        input = client.recv(1024)
                         if not input:
                             break
                     else:
                         input = b""
                     self.process_input(input)
                     self.agent.food_update()
-                    if self.agent.inventory["nourriture"] <= 0:
-                        print("Dude u ded")
-                        break
+                    # if self.agent.inventory["nourriture"] <= 0:
+                    #     print("Dude u ded")
+                    #     break
                     if  self.agent.starting >= 3:
                         w = self.plan.run(self.agent)
                     # elif self.agent.starting >= 3:

@@ -1,6 +1,7 @@
 import time
 import random
 import numpy as np
+import json
 
 random.seed(42)
 
@@ -16,24 +17,23 @@ class Agent():
         self.running_routine = [] ## Messages Sent not answered
         self.unsent_commands = [] ## Messages to be sent
         self.resolved_queue = [] ## Messages Resolved includes status
-        self.starting = 0
-        self.team = args.n
-        self.nb_client = 0
-        self.size = np.array([10,10])
-        self.pos = np.array([0,0])
-        self.facing = 0
-        self.objects = None
-        self.turn = 0
-        self.inventory ={"nourriture": 10, "linemate": 0, "deraumere": 0, "sibur": 0, "mendiane": 0, "phiras": 0, "thystame": 0}
-        self.level = 1
-        self.last_turn = 0
-        self.basket = []
-        self.totem_pos = np.array([0,0])
-        self.totem_old = self.totem_pos
-        self.totem_size = 0
-        self.inventory_group = self.inventory
-        self.objects_countdown = None
-        
+        self.starting = 0 # just started the client for handshage
+        self.team = args.n # team
+        self.size = np.array([10,10]) #size of the map
+        self.pos = np.array([0,0]) #actual position wrt spawning point
+        self.facing = 0 #direction facing wrt spawning point
+        self.turn = 0 # internal control of time
+        self.inventory ={"nourriture": 10, "linemate": 0, "deraumere": 0, "sibur": 0, "mendiane": 0, "phiras": 0, "thystame": 0} # starting inventory updates whenever inventory is seen
+        self.level = 1 #level
+        self.objects_countdown = None #timeouts of seen parts of the map, forgets
+        self.last_turn = 0 #for control of timeouts last seen turn
+        self.new_totem = np.array([0,0]) # for found totems
+        self.new_totem_size = 0 # for found totems
+        self.totem_pos = np.array([0,0]) # for starting totem
+        self.totem_size = 0 # starting totem
+        self.name = id(self) #give yourself a name
+        self.reset_team() #reset info about teams
+
 
     def starting_command(self, command: str):
         if self.starting == 0:
@@ -68,11 +68,6 @@ class Agent():
                 self.objects_countdown = np.zeros(self.size)
                 self.starting += 1
 
-    def basket_add(self, item, who):
-        pass
-
-    def basket_remove(self, item, who):
-        pass
     
     def food_update(self):
         #update 
@@ -87,6 +82,9 @@ class Agent():
                 for y in range(self.size[1]):
                     if breaks[x,y]:
                         self.objects[x][y] = []
+                    if self.objects[x][y].count("linemate") >= self.totem_size:
+                        self.new_totem = np.array([x,y])
+                        self.new_totem_size = self.objects[x][y].count("linemate")
                     if np.array_equal(self.totem_pos,np.array([x,y])):
                         if len(self.objects[x][y]) != 0:
                             self.totem_size = self.objects[x][y].count("linemate")
@@ -138,8 +136,9 @@ class Agent():
         pass
     
     def broadcast_processer(self,command):
-        pass
-    
+        self.turn += 7
+        self.resolve_from_running_routine("broadcast")
+  
     def fork_processer(self,command):
         pass
 
@@ -228,12 +227,17 @@ class Agent():
 
 
     def niveau_actuel_processer(self,command):
-        pass
+        levels = command.split(":")
+        self.level = int(levels[1])
+        self.resolve_from_running_routine("incantation")
 
     def message_processer(self,command):
-        if self.tick is None:
-            self.tick = time.time() - self.starting_time
-        pass
+        #str.split
+        split_command1 = command.split(",",maxsplit = 1)
+        direction = int(split_command1[0].split()[1])
+        message = split_command1[1]
+        self.team_message_processer(message, direction)
+
 
     def processer_select(self,command: str):
         static_responses = {"ok":self.ok_processer,
@@ -272,3 +276,77 @@ class Agent():
         else:
             return ""
 
+    def team_message_processer(self, message, direction):
+        processers = {
+            "lfg": self.bc_lfg_processer,
+            "join": self.bc_join_processer,
+            "inventory": self.bc_inventory_processer,
+            "complete": self.bc_complete_processer,
+            "closed": self.bc_closed_party,
+            "kick": self.bc_disband
+        }        
+
+        try:
+            message_dict = json.loads(message)
+        except Exception as e:
+            print(f"Could not decript message {e}")
+            return
+        kind = message_dict.get("kind")
+        if kind is not None and kind in processers.keys():
+            processers[kind](message_dict, direction)
+            return
+        print("Recived random broadcast")
+        
+
+    def bc_lfg_processer(self, message_dict, direction):
+        """
+        Recieves messages of poosible lfg.
+
+        Tested
+        """
+        lvl = int(message_dict.get("lvl",-1))
+        if lvl != self.level + 1 or self.team_name is not None:
+            return
+        self.team_name = message_dict.get("team_name")
+        self.team_role = 1
+        
+
+    def bc_join_processer(self,message_dict, direction):
+        if message_dict.get("team_name") != self.team_name and self.team_role != 3:
+            return 
+        self.team_members.append(message_dict.get("name"))       
+
+    def bc_inventory_processer(self, message_dict,direction):
+        member = message_dict.get("name")
+        if member not in self.team_members:
+            return
+        inventory = message_dict.get("inventory")
+        self.team_inventories[member] = inventory
+
+    def bc_complete_processer(self,message_dict, direction):
+        if message_dict.get("team_name") != self.team_name:
+            return
+        self.colection_complete = True
+
+    def bc_closed_party(self, message_dict,direction):
+        """
+        Message to send when the party is full
+        
+        """       
+        if message_dict.get("team_name") != self.team_name and self.team_role != 1:
+            return
+        self.team_role = 2
+        self.team_members = message_dict.get("members")
+
+    def bc_disband(self, message_dict,direction):
+        if message_dict.get("team_name") != self.team_name:
+            return
+        self.reset_team()
+
+    def reset_team(self):
+        self.team_name = None # for teaming up
+        self.team_role = 0 # 0 = none ,1 = applicant, 2=member, 3 = master
+        self.team_members = [] #who is in our team
+        self.team_inventories = {} #inventories of our team members
+        self.lfg = False # Am I Leader of a not full group
+        self.colection_complete = False # is what we are doing done?

@@ -1,6 +1,6 @@
 #%%from BasicAction import Interaction
 from core_behavior_tree import BTNode, LOGIC
-from core_bt_interactions import Interaction
+import core_behavior_tree as ct
 from domain_agent import Agent
 import numpy as np
 from functools import  reduce
@@ -22,9 +22,9 @@ def rotate_create(facing:int, rtarget: int)->list[BTNode]:
     if c1 == 0:
         return []
     if c1 > 0:
-         return list(map(lambda x: Interaction("gauche"), range(c2)))   
+         return list(map(lambda x: ct.Interaction("gauche"), range(c2)))   
     if c1 < 0:
-         return list(map(lambda x: Interaction("droite"), range(c2)))   
+         return list(map(lambda x: ct.Interaction("droite"), range(c2)))   
         
      
 #%%
@@ -34,8 +34,10 @@ def shorstest_vect(array):
     return array [indmin]
 
 
-def move_to(target: np.array, agent:Agent) -> BTNode:
+def move_to(target: np.array, agent:Agent, name: None|str = None) -> BTNode:
         print(f"moving to: {target}")
+        if name is None:
+             name =f"move_to->{target}"
         facing = agent.facing
         position = agent.pos
         target1 = target + DIRECTIONS[0] * agent.size[0]
@@ -62,8 +64,8 @@ def move_to(target: np.array, agent:Agent) -> BTNode:
             xfacing = 2   
        
         nmoves = np.abs(displacement[0])
-        w = map(lambda x: Interaction("avance"), range(nmoves))
-        plan.extend(w)
+        w = map(lambda x: ct.Interaction("avance"), range(nmoves))
+        plan.extend(list(w))
 
         ### movement in y
         if  displacement[1] > 0:
@@ -72,16 +74,18 @@ def move_to(target: np.array, agent:Agent) -> BTNode:
             plan += rotate_create(xfacing,1)
         
         nmoves = np.abs(displacement[1])
-        w = map(lambda x: Interaction("avance"), range(nmoves))
-        plan.extend(w)
-
-        return reduce( lambda x,y: x & y, plan)
+        w = map(lambda x: ct.Interaction("avance"), range(nmoves))
+        plan.extend(list(w))
+        return ct.AND(plan)
 
 def roam(agent: Agent):
-    r = Interaction("voir") & Interaction("droite") & Interaction("voir") & Interaction("droite") & Interaction("voir") & Interaction("droite") & Interaction("voir") 
+    r = [ct.Interaction("voir"), ct.Interaction("droite"), ct.Interaction("voir") , ct.Interaction("droite") , ct.Interaction("voir") , ct.Interaction("droite") , ct.Interaction("voir") ] 
     nt = random.randint(0,3)
     for j in range(nt):
-        r = r & Interaction("droite")
+        r.append( ct.Interaction("droite"))
     for j in range(2*agent.level - 2 + random.randint(0,3)):
-        r = r & Interaction("avance")
-    return r
+        r.append(ct.Interaction("avance"))
+    return ct.AND(actions= r , name="roam Generated")
+
+def go_to_totem(x: Agent):
+     return ct.GEN(lambda x: move_to(x.totem_pos,x))#%%from BasicAction import Interaction

@@ -1,11 +1,10 @@
-from core_behavior_tree import GEN, LOGIC, MSG, GATE
-from gen_movement import roam
-from gen_totem import mark_totem_gen
-from gen_gathering import pick_up, pick_up_multiple
-from core_bt_interactions import Interaction
+import core_behavior_tree as ct
+import gen_movement as gmov
+import gen_gathering as ggat
+from gen_common import gen_interaction
+import numpy as np
 
-##lv2invt = ["linemate"]
-
+lv2invt = {"linemate":1}
 ##lv3invt = ["linemate", "deraumere", "sibur"]
 ##lv4invt = ["linemate","linemate","sibur","phiras", "phiras"]
 ##lv5invt = ["linemate", "deraumere","sibur","sibur","phiras"]
@@ -13,11 +12,34 @@ from core_bt_interactions import Interaction
 ##lv7invt = ["linemate", "deraumere","deraumere","sibur","sibur","sibur","phiras"]
 ##lv8invt = ["linemate","linemate","deraumere","deraumere","sibur","sibur","mendiane","mendiane","phiras","phiras","thystame"]
 
+## 0th plan is to roam
+
+roam_gen = ct.GEN(gmov.roam)
+
+### first plan is to be alive
+
+find_food_vector = [ct.GATE(open_cond= lambda x: x.inventory["nourriture"] < 10,
+                 close_cond = lambda x: x.inventory["nourriture"] > 15) , 
+                     ct.GEN(lambda x: ggat.pick_up(x,"nourriture"))]
+
+find_food = ct.AND(find_food_vector, name = "find_food")
 
 
+### second plan is to mark a totem
 
-pick_up_multiple_plan = GEN(lambda x: pick_up_multiple(x,{"linemate":1, "deraumere":1,"sibur":1} ))
-mark_totem = GEN (lambda x: mark_totem_gen(x,"linemate"), sticky=True)
-find_food = GATE(open_cond= lambda x: x.inventory["nourriture"] < 10,
-                 close_cond = lambda x: x.inventory["nourriture"] > 15) & GEN(lambda x: pick_up(x,"nourriture"))
-master_plan = mark_totem | GEN(roam)
+mark_totem = ct.GEN(ggat.mark_totem)
+
+#### trird plan is to level up to level 2
+
+level2 = ct.AND_P([ct.GEN(lambda x: ggat.level_up(x,lv2invt)),ct.LOGIC(lambda x: False)])
+
+#gate1 = ct.GATE(open_cond= lambda x: ggat.do_i_have_inventory(x,items_to_gather), close_cond= lambda x: False)
+
+
+#gg = (gate1 | gather_items) & ct.MSG("hit this") & ct.Interaction("pose", "linemate", 4) 
+
+#gg = gg & ct.GEN(gmov.go_to_totem)
+
+
+                         
+master_plan = ct.OR([find_food,mark_totem,level2,roam_gen])

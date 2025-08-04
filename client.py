@@ -1,11 +1,6 @@
 import argparse
 from infra_orchestrator import Orchester
-from core_bt_interactions import Interaction
 from domain_agent import Agent
-import numpy as np
-from core_behavior_tree import  GEN
-from gen_movement import roam
-from gen_levelup import level_up
 from plan_master import master_plan
 
 def parse_args():
