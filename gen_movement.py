@@ -3,10 +3,10 @@ from core_behavior_tree import BTNode, LOGIC
 import core_behavior_tree as ct
 from domain_agent import Agent
 import numpy as np
-from functools import  reduce
 import random 
 
 DIRECTIONS = list(map(np.array,[[1,0],[0,-1],[-1,0],[0,1]]))
+import random 
 
 #%%
 def rotate_create(facing:int, rtarget: int)->list[BTNode]:

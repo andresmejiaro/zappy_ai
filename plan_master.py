@@ -3,7 +3,7 @@ import gen_movement as gmov
 import gen_gathering as ggat
 from gen_common import gen_interaction
 import numpy as np
-
+import gen_teaming as gtem
 lv2invt = {"linemate":1}
 ##lv3invt = ["linemate", "deraumere", "sibur"]
 ##lv4invt = ["linemate","linemate","sibur","phiras", "phiras"]
@@ -40,6 +40,8 @@ level2 = ct.AND_P([ct.GEN(lambda x: ggat.level_up(x,lv2invt)),ct.LOGIC(lambda x:
 
 #gg = gg & ct.GEN(gmov.go_to_totem)
 
+teaming = ct.OR([roam_gen,gtem.do_team])
 
-                         
-master_plan = ct.OR([find_food,mark_totem,level2,roam_gen])
+
+#master_plan = ct.OR([find_food,mark_totem,level2,roam_gen])                         
+master_plan = teaming

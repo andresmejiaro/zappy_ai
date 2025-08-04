@@ -132,12 +132,12 @@ class Agent():
         self.resolve_from_running_routine(x, status)
 
     
-    def expulse_processer(self,command):
+    def expulse_processer(self,command, x = None):
         pass
     
-    def broadcast_processer(self,command):
+    def broadcast_processer(self,command, x = None):
         self.turn += 7
-        self.resolve_from_running_routine("broadcast")
+        self.resolve_from_running_routine(x)
   
     def fork_processer(self,command):
         pass
@@ -278,12 +278,12 @@ class Agent():
 
     def team_message_processer(self, message, direction):
         processers = {
-            "lfg": self.bc_lfg_processer,
-            "join": self.bc_join_processer,
+            "lfg": self.bc_lfg_processer,#generated
+            "join": self.bc_join_processer, #generated
             "inventory": self.bc_inventory_processer,
             "complete": self.bc_complete_processer,
-            "closed": self.bc_closed_party,
-            "kick": self.bc_disband
+            "closed": self.bc_closed_party, #generated
+            "disband": self.bc_disband #generated
         }        
 
         try:
@@ -303,15 +303,20 @@ class Agent():
         Recieves messages of poosible lfg.
 
         Tested
+        generator written
         """
         lvl = int(message_dict.get("lvl",-1))
         if lvl != self.level + 1 or self.team_name is not None:
             return
         self.team_name = message_dict.get("team_name")
         self.team_role = 1
+        self.lfg = True
         
 
     def bc_join_processer(self,message_dict, direction):
+        """
+        generator written
+        """
         if message_dict.get("team_name") != self.team_name and self.team_role != 3:
             return 
         self.team_members.append(message_dict.get("name"))       
@@ -331,22 +336,33 @@ class Agent():
     def bc_closed_party(self, message_dict,direction):
         """
         Message to send when the party is full
-        
+        tested
         """       
         if message_dict.get("team_name") != self.team_name and self.team_role != 1:
             return
+        if self.name not in message_dict.get("members"):
+            self.reset_team()
         self.team_role = 2
         self.team_members = message_dict.get("members")
 
     def bc_disband(self, message_dict,direction):
+        """
+        disbands if the leader says so
+
+        tested
+        """
         if message_dict.get("team_name") != self.team_name:
             return
         self.reset_team()
 
     def reset_team(self):
+        """
+        Resets variables related to the teams
+        """
         self.team_name = None # for teaming up
         self.team_role = 0 # 0 = none ,1 = applicant, 2=member, 3 = master
         self.team_members = [] #who is in our team
         self.team_inventories = {} #inventories of our team members
         self.lfg = False # Am I Leader of a not full group
         self.colection_complete = False # is what we are doing done?
+        self.party_size = 2 # party size limit 
