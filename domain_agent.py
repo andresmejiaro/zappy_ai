@@ -32,7 +32,7 @@ class Agent():
         self.totem_pos = np.array([0,0]) # for starting totem
         self.totem_size = 0 # starting totem
         self.name = id(self) #give yourself a name
-        self.reset_team() #reset info about teams
+        self.reset_party() #reset info about teams
 
 
     def starting_command(self, command: str):
@@ -276,7 +276,7 @@ class Agent():
         else:
             return ""
 
-    def team_message_processer(self, message, direction):
+    def party_message_processer(self, message, direction):
         processers = {
             "lfg": self.bc_lfg_processer,#generated
             "join": self.bc_join_processer, #generated
@@ -306,30 +306,36 @@ class Agent():
         generator written
         """
         lvl = int(message_dict.get("lvl",-1))
-        if lvl != self.level + 1 or self.team_name is not None:
+        if lvl != self.level + 1:
             return
-        self.team_name = message_dict.get("team_name")
-        self.team_role = 1
-        self.lfg = True
+        remote_name =message_dict.get("party_name")
+        if self.party_name is not None:
+            if remote_name < self.party_name:
+                return
+            else:
+                self.reset_party()  
+        self.party_name = remote_name
+        self.party_role = 1
+        
         
 
     def bc_join_processer(self,message_dict, direction):
         """
         generator written
         """
-        if message_dict.get("team_name") != self.team_name and self.team_role != 3:
+        if message_dict.get("party_name") != self.party_name and self.party_role != 3:
             return 
-        self.team_members.append(message_dict.get("name"))       
+        self.party_members.append(message_dict.get("name"))       
 
     def bc_inventory_processer(self, message_dict,direction):
         member = message_dict.get("name")
-        if member not in self.team_members:
+        if member not in self.party_members:
             return
         inventory = message_dict.get("inventory")
-        self.team_inventories[member] = inventory
+        self.party_inventories[member] = inventory
 
     def bc_complete_processer(self,message_dict, direction):
-        if message_dict.get("team_name") != self.team_name:
+        if message_dict.get("party_name") != self.party_name:
             return
         self.colection_complete = True
 
@@ -338,12 +344,12 @@ class Agent():
         Message to send when the party is full
         tested
         """       
-        if message_dict.get("team_name") != self.team_name and self.team_role != 1:
+        if message_dict.get("party_name") != self.party_name and self.party_role != 1:
             return
         if self.name not in message_dict.get("members"):
-            self.reset_team()
-        self.team_role = 2
-        self.team_members = message_dict.get("members")
+            self.reset_party()
+        self.party_role = 2
+        self.party_members = message_dict.get("members")
 
     def bc_disband(self, message_dict,direction):
         """
@@ -351,18 +357,19 @@ class Agent():
 
         tested
         """
-        if message_dict.get("team_name") != self.team_name:
+        if message_dict.get("party_name") != self.party_name:
             return
-        self.reset_team()
+        self.reset_party()
 
-    def reset_team(self):
+    def reset_party(self):
         """
-        Resets variables related to the teams
+        Resets variables related to the partys
         """
-        self.team_name = None # for teaming up
-        self.team_role = 0 # 0 = none ,1 = applicant, 2=member, 3 = master
-        self.team_members = [] #who is in our team
-        self.team_inventories = {} #inventories of our team members
+        self.party_name = None # for partying up
+        self.party_role = 0 # 0 = none ,1 = applicant, 2=member, 3 = master
+        self.party_members = [] #who is in our party
+        self.party_inventories = {} #inventories of our party members
         self.lfg = False # Am I Leader of a not full group
         self.colection_complete = False # is what we are doing done?
         self.party_size = 2 # party size limit 
+        self.party_closed = False # did I send closing message

@@ -3,39 +3,46 @@ from gen_common import gen_interaction
 import json
 import random
 
-
-do_i_have_lfg = ct.LOGIC(lambda x: x.lfg)
-do_i_have_team = ct.LOGIC(lambda x: x.team_name is not None)
-
-def join_group_gen(x):
+def join_party_gen(x):
     message = {}
     message["kind"] = "join"
-    message["team"] = x.team_name
+    message["team_name"] = x.party_name
     message["name"] = x.name
     return gen_interaction("broadcast",json.dumps(message))
 
 def lfg_gen(x):
     message = {}
     message["kind"] = "lfg"
-    if x.team_name is None:
-        x.team_name = hash(random.randbytes(64))
-    message["team"] = x.team_name
+    if x.party_name is None:
+        x.party_name = hash(random.randbytes(64))
+    message["party_name"] = x.party_name
     message["lvl"] = x.level + 1
-    if not x.name in x.team_members:
-        x.team_members.append(x.name)
+    x.lfg = T
+    if not x.name in x.party_members:
+        x.party_members.append(x.name)
     return gen_interaction("broadcast",json.dumps(message))
 
 def closed_party_gen(x):
     message = {}
     message["kind"] = "closed"
-    message["team"] = x.team_name
-    message["members"] = x.team_members
+    message["party_name"] = x.party_name
+    message["members"] = x.party_members
     return gen_interaction("broadcast",json.dumps(message))
 
 def disband(x):
     message = {}
     message["kind"] = "disband"
-    message["team"] = x.team_name
+    message["party_name"] = x.party_name
     return gen_interaction("broadcast",json.dumps(message))
 
-do_team = ct.OR([ct.AND([do_i_have_lfg,ct.GEN(join_group_gen)]) , ct.GEN(lfg_gen, timeout=10)])
+do_i_have_party = ct.LOGIC(lambda x: x.party_name is not None)
+do_i_have_ppl = ct.LOGIC(lambda x: len(x.party_members) > x.party_size )
+is_party_closed = ct.LOGIC(lambda x: x.party_closed)
+
+party_lead_closed = ct.AND() #step0
+step1 = ct.AND([do_i_have_party,ct.GEN(join_party_gen)  ])
+
+
+
+
+

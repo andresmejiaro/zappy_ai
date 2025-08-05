@@ -40,7 +40,7 @@ level2 = ct.AND_P([ct.GEN(lambda x: ggat.level_up(x,lv2invt)),ct.LOGIC(lambda x:
 
 #gg = gg & ct.GEN(gmov.go_to_totem)
 
-teaming = ct.OR([roam_gen,gtem.do_team])
+teaming = ct.OR([gtem.do_team])
 
 
 #master_plan = ct.OR([find_food,mark_totem,level2,roam_gen])                         
