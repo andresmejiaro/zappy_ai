@@ -117,13 +117,14 @@ class GEN(BTNode):
     takes the agent internal time not machine time
 
     """
-    def __init__(self, generator:Callable[[Any], BTNode], name: str|None = None, ret: Status|None = None, timeout:int = 400):
+    def __init__(self, generator:Callable[[Any], BTNode], name: str|None = None, ret: Status|None = None, timeout:int = 400, reset_only_on_sucess = False):
         super().__init__(name)
         self.generator = generator
         self.plan = None
         self.ret = ret
         self.timeout = timeout
         self.gen_stamp = None
+        self.reset_only_on_sucess = reset_only_on_sucess
     
     def run(self, object):
         if self.gen_stamp is not None and (object.turn - self.gen_stamp) > self.timeout:
@@ -136,7 +137,9 @@ class GEN(BTNode):
             #    print(f"Generator Failed due to {e}")
             #    return Status.F     
         w = self.plan.run(object)
-        if w in [Status.S, Status.F]:
+        if w == Status.S:
+            self.plan = None
+        if w == Status.F and not self.reset_only_on_sucess:
             self.plan = None
         if self.ret is not None and w != Status.O:
             w = self.ret 

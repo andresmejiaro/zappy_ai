@@ -44,14 +44,10 @@ class Orchester():
                         input = b""
                     self.process_input(input)
                     self.agent.food_update()
-                    # if self.agent.inventory["nourriture"] <= 0:
-                    #     print("Dude u ded")
-                    #     break
                     if  self.agent.starting >= 3:
                         w = self.plan.run(self.agent)
-                    # elif self.agent.starting >= 3:
-                    #     print("Lo Logre!")
-                    #     break
+                        if w != Status.O:
+                            print("termine")
                     message = self.agent.generate_message(args)
                     if len(message) > 0:
                         print(f"sending message: {message}")

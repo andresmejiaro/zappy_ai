@@ -4,6 +4,18 @@ from gen_common import gen_interaction
 from gen_movement import shorstest_vect, move_to
 import gen_movement as gmov
 import numpy as np
+import random
+import gen_teaming as gtem
+
+def inventory_selector(agent, indivudual = False)->dict:
+    #what inventory to use
+    if agent.party.party_closed == True and not indivudual:
+        agent.party.update_party_inventory()
+        inv = agent.party.party_inventory
+    else:
+        inv = agent.inventory
+    return inv
+
 
 def drop(agent: Agent,inventory: dict) -> ct.BTNode:
     actions = []
@@ -38,36 +50,41 @@ def closest_resource(agent: Agent, resource: str):
 def pick_up(agent: Agent, resource: str) -> ct.BTNode:
     x = closest_resource(agent, resource)
     if x is None or len(x) == 0:
-        return ct.LOGIC(lambda x: False)
+        return ct.GEN(gmov.roam)
     actions = move_to(x, agent)
     actions = [actions, ct.Interaction("prend",resource), ct.Interaction("inventaire")]
     return ct.AND(actions, name = f"pick up {resource}")  
 
 
-def pick_up_multiple(agent, resources: dict)->ct.BTNode:
+def pick_up_multiple(agent, resources: dict, individual = False)->ct.BTNode:
     """
     This sets up multiple things to find multiple stuff 
     to find if any found returns True
     """
     look4 = []
+    inv = inventory_selector(agent, individual)
     for key, value in resources.items():
-        if agent.inventory[key] < value:
+        if inv.get(key,0) < value:
             look4.append( key)
+    random.shuffle(look4)
     w = map(lambda x: ct.GEN(lambda y: pick_up(y, x)), look4)
     w = list(w)
     if len(w) == 0:
         return ct.LOGIC(lambda x: True)
     z = ct.OR(w, name="pick_up_multiple")
-    return z
+    if agent.party.party_name is None:
+        return z
+    return ct.AND_P([z, ct.GEN(gtem.share_inventory)], name = "sharing after finding")
 
-def do_i_have_inventory(agent, resources: dict)->bool:
+def do_i_have_inventory(agent, resources: dict, individual = False)->bool:
+    inv = inventory_selector(agent, individual)
     for key, value in resources.items():
-        if agent.inventory[key] < value:
+        if inv.get(key,0) < value:
             return False
     return True 
 
-def gather(agent,resources: dict)->ct.BTNode:
-    check = ct.LOGIC(lambda x: do_i_have_inventory(x,resources), name = "gather check Inv")
+def gather(agent,resources: dict, individual = False)->ct.BTNode:
+    check = ct.LOGIC(lambda x: do_i_have_inventory(x,resources, individual), name = "gather check Inv")
     gather_node = ct.GEN(lambda x: pick_up_multiple(x,resources),ret=ct.Status.F, name = "gather collector")
     roam = ct.GEN(gmov.roam,ret=ct.Status.F, name="gather roam")
     return ct.OR([check,gather_node,roam], name = f"gather {resources}")
@@ -78,14 +95,35 @@ def mark_totem(agent):
         print("New Totem Found!°")
     else:
         return ct.LOGIC(lambda x: False)
-    pick_a_stone = ct.GEN(lambda x: gather(x,{"linemate":1}), name = "mark totem pickup")
+    pick_a_stone = ct.GEN(lambda x: gather(x,{"linemate":1}, individual = True), name = "mark totem pickup")
     go_to_totem = ct.GEN(gmov.go_to_totem, name = "mark totem movement")
     drop_stone = ct.GEN(lambda x: drop(x,{"linemate":1}), name= "mark totem drop")
     return ct.AND_P([pick_a_stone,go_to_totem,drop_stone],name= "mark totem sequence")
 
-def level_up(agent, reqs, players = 1):
+def level_up_reqs(aclv):
+    lreq =[{"linemate":1},
+           {"linemate":1, "deraumere":1, "sibur":1},
+           {"linemate":2,"sibur":1,"phiras":2},
+           {"linemate":1, "deraumere":1,"sibur":2,"phiras":1},
+           {"linemate":1, "deraumere":1,"sibur":1,"mendiane":3},
+           {"linemate":1, "deraumere":2,"sibur":3,"phiras":1},
+           {"linemate":2, "deraumere":2,"sibur":2, "mendiane":2,"phiras":2,"thystame":1}
+    ]
+    return lreq[aclv - 1]
+
+logic1 = lambda x: x.party.party_name is None or len(x.party.party_members_ready) == len(x.party.party_members)
+
+
+def level_up(agent):
+    reqs = level_up_reqs(agent.level)
+    
+    do_i_need_team = ct.LOGIC(lambda x: x.level <= 1, name = "do I need to team up")
+    team_up = ct.OR([do_i_need_team, gtem.teaming], name = "level up teaming up")
     gather_items = ct.GEN(lambda x: gather(x, reqs), "level up gather")
     go_to_totem = ct.GEN(gmov.go_to_totem, name = "level up movement")
     drop_items = ct.GEN(lambda x: drop(x,reqs), name= "level up drop")
+    i_am_ready = ct.GEN(gtem.ready_for_incantation)
+    wait_for_team_mates = ct.LOGIC(logic1)
     incantation = gen_interaction("incantation")
-    return ct.AND_P([gather_items, go_to_totem, drop_items, incantation], name="level up sequence")
+    disband = ct.GEN(gtem.disband, name ="disbanding after level up")
+    return ct.AND_P([team_up,gather_items, go_to_totem, drop_items,i_am_ready,wait_for_team_mates, incantation,disband], name="level up sequence")
