@@ -29,9 +29,10 @@ mark_totem = ct.GEN(ggat.mark_totem, name = "mark_totem")
 
 #### trird plan is to level up to level 2
 
-level_up = ct.GEN(lambda x: ggat.level_up(x), name = "level up main", reset_only_on_sucess=True)
+level_up = ct.GEN(lambda x: ggat.level_up(x), name = "level up main", reset_on_failure=False)
 
 
 
 
-master_plan = ct.OR([mark_totem,level_up, gen_interaction("inventaire")], name = "master plan")                         
+master_plan = ct.OR([find_food, mark_totem,level_up, ct.ALWAYS_F( gen_interaction("inventaire"), name = "ending inventaire")], name = "master plan")                         
+

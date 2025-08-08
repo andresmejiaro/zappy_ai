@@ -52,7 +52,7 @@ def pick_up(agent: Agent, resource: str) -> ct.BTNode:
     if x is None or len(x) == 0:
         return ct.GEN(gmov.roam)
     actions = move_to(x, agent)
-    actions = [actions, ct.Interaction("prend",resource), ct.Interaction("inventaire")]
+    actions = [actions, ct.Interaction("prend",resource)]
     return ct.AND(actions, name = f"pick up {resource}")  
 
 
@@ -85,8 +85,8 @@ def do_i_have_inventory(agent, resources: dict, individual = False)->bool:
 
 def gather(agent,resources: dict, individual = False)->ct.BTNode:
     check = ct.LOGIC(lambda x: do_i_have_inventory(x,resources, individual), name = "gather check Inv")
-    gather_node = ct.GEN(lambda x: pick_up_multiple(x,resources),ret=ct.Status.F, name = "gather collector")
-    roam = ct.GEN(gmov.roam,ret=ct.Status.F, name="gather roam")
+    gather_node = ct.GEN(lambda x: pick_up_multiple(x,resources), name = "gather collector")
+    roam = ct.GEN(gmov.roam, name="gather roam")
     return ct.OR([check,gather_node,roam], name = f"gather {resources}")
 
 def mark_totem(agent):

@@ -91,6 +91,33 @@ class NOT(BTNode):
             return Status.F
         return w 
 
+class ALWAYS_F(BTNode):
+    def __init__(self, A1:BTNode, name: str|None = None):
+        super().__init__(name)
+        self.A1 = A1
+
+    def run(self, object):
+        w =self.A1.run(object)
+        if w == Status.F:
+            return Status.F
+        if w == Status.S:
+            return Status.F
+        return w 
+
+class ALWAYS_S(BTNode):
+    def __init__(self, A1:BTNode, name: str|None = None):
+        super().__init__(name)
+        self.A1 = A1
+
+    def run(self, object):
+        w =self.A1.run(object)
+        if w == Status.F:
+            return Status.S
+        if w == Status.S:
+            return Status.S
+        return w
+
+
 class LOGIC(BTNode):
     def __init__(self, fun: Callable[[Any], bool], name: str|None = None):
         super().__init__(name)
@@ -103,59 +130,43 @@ class LOGIC(BTNode):
         
 class GEN(BTNode):
     """
-    Creates a dinamic plan. Refreshes upon Success or Failure.
+    Creates a dinamic plan. 
     Uses a generator function a generator function takes an agent 
     and returns a BTNode object
-    
-    the return option makes this node return always the same value.
-    The idea is to create loops
-
-    LOGIC | GEN (ret = Status.F) is a while loop until condition is
-    complete for example
-
-    timeout forces to drop the plan to regenerate note timeout here 
-    takes the agent internal time not machine time
-
+            
     """
-    def __init__(self, generator:Callable[[Any], BTNode], name: str|None = None, ret: Status|None = None, timeout:int = 400, reset_only_on_sucess = False):
+    def __init__(self, generator:Callable[[Any], BTNode], name: str|None = None, reset_on_failure = True, reset_on_success = True):
         super().__init__(name)
         self.generator = generator
         self.plan = None
-        self.ret = ret
-        self.timeout = timeout
-        self.gen_stamp = None
-        self.reset_only_on_sucess = reset_only_on_sucess
+        self.reset_on_success = reset_on_success
+        self.reset_on_failure = reset_on_failure
     
     def run(self, object):
-        if self.gen_stamp is not None and (object.turn - self.gen_stamp) > self.timeout:
-            self.plan = None
         if self.plan is None:
             #try:
                 self.plan = self.generator(object)
-                self.gen_stamp = object.turn
             #except Exception as e:
             #    print(f"Generator Failed due to {e}")
             #    return Status.F     
-        w = self.plan.run(object)
-        if w == Status.S:
+        w = self.plan.run(object) 
+        if w == Status.S and self.reset_on_success:
             self.plan = None
-        if w == Status.F and not self.reset_only_on_sucess:
+        if w == Status.S and self.reset_on_failure:
             self.plan = None
-        if self.ret is not None and w != Status.O:
-            w = self.ret 
         return w        
 
-class MSG(BTNode):
-    def __init__(self, message, nxt = "and"):
-        self.message = message
-        self.nxt = nxt
+# class MSG(BTNode):
+#     def __init__(self, message, nxt = "and"):
+#         self.message = message
+#         self.nxt = nxt
 
-    def run(self, object):
-        print(self.message)
-        if self.nxt == "and":
-            return Status.S
-        if self.nxt == "or":
-            return Status.F
+#     def run(self, object):
+#         print(self.message)
+#         if self.nxt == "and":
+#             return Status.S
+#         if self.nxt == "or":
+#             return Status.F
  
 class GATE(BTNode):
     """
