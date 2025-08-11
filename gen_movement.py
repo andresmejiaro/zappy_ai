@@ -4,6 +4,7 @@ import core_behavior_tree as ct
 from domain_agent import Agent
 import numpy as np
 import random 
+import gen_teaming as gtem
 
 DIRECTIONS = list(map(np.array,[[1,0],[0,-1],[-1,0],[0,1]]))
 import random 
@@ -15,7 +16,7 @@ def rotate_create(facing:int, rtarget: int)->list[BTNode]:
     
     c1 = (rtarget - facing)
     c2 = -(-rtarget + facing +4) 
-    print(f"c1: {c1} c2:{c2}")
+    #print(f"c1: {c1} c2:{c2}")
     if abs(c1) >abs(c2):
          c1 = c2
     c2 = abs(c1)
@@ -35,7 +36,7 @@ def shorstest_vect(array):
 
 
 def move_to(target: np.array, agent:Agent, name: None|str = None) -> BTNode:
-        print(f"moving to: {target}")
+        #print(f"moving to: {target}")
         if name is None:
              name =f"move_to->{target}"
         facing = agent.facing
@@ -87,5 +88,17 @@ def roam(agent: Agent):
         r.append(ct.Interaction("avance"))
     return ct.AND(actions= r , name="roam Generated")
 
-def go_to_totem(x: Agent):
-     return ct.GEN(lambda x: move_to(x.totem_pos,x))#%%from BasicAction import Interaction
+
+def marco_polo(agent: Agent):
+    if agent.party.party_role == 3:
+        return ct.GEN(gtem.ready_for_incantation, name ="leader marco polo announce")
+    try:
+        sound_dir = agent.party.sound_direction()
+    except:
+         return ct.LOGIC(lambda x: False)
+    if np.array_equal(sound_dir, np.array([0,0])):
+          return ct.GEN(gtem.ready_for_incantation, name = "follower marco polo complete")
+    target = agent.pos + sound_dir
+    return ct.GEN(lambda x: move_to(target, x), "marco polo step")
+     
+

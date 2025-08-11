@@ -12,10 +12,12 @@ class Status(Enum):
 
 class BTNode(ABC):
     def __init__(self,name: str |None = None):
+        self._log = {}
         if name is None:
             self.name = f"node{id(self)}"
         else:
             self.name = name
+        self._log["name"] = self.name
 
     def __repr__(self):
         cls = self.__class__.__name__
@@ -24,8 +26,11 @@ class BTNode(ABC):
     @abstractmethod
     def run(self, object):
         pass
-    
 
+    @abstractmethod
+    def log(self):
+        pass
+    
 
 class AND(BTNode):
     """
@@ -34,14 +39,28 @@ class AND(BTNode):
     def __init__(self, actions: list[BTNode], name: str|None = None):
         super().__init__(name)
         self.actions = actions
+        self._last_return = None
+        self._key_node = None
     
     
     def run(self,object):
         for action in self.actions:
+            self._key_node = action
             w = action.run(object)
             if w != Status.S:
+                self._last_return = w         
                 return w
+        self._last_return = Status.S
         return Status.S
+    
+    def log(self):
+        self._log["kind"] = "AND"
+        if self._last_return is not None:
+            self._log["return"] = self._last_return.name
+        self._log["children"] = { f"{n}":k.log() for n,k in enumerate(self.actions)}
+        if self._key_node is not None:
+            self._log["key_node"] = self._key_node.name
+        return self._log
 
 
 class AND_P(BTNode):
@@ -52,82 +71,176 @@ class AND_P(BTNode):
         super().__init__(name)
         self.actions = actions
         self.action_n = 0
-    
+        self._last_return = None
+        self._key_node = None
     
     def run(self,object):
         if self.action_n >= len(self.actions):
+            self._key_node = "done"
+            self._last_return = Status.S
             return Status.S
         w = self.actions[self.action_n].run(object)
+        self._key_node = self.actions[self.action_n]
         if w != Status.S:
-              return w
+            self._last_return = w
+            return w
         else:
             self.action_n += 1
+        self._last_return = Status.O
         return Status.O
-
-
+    
+    def log(self):
+        self._log["kind"] = "AND_P"
+        if self._last_return is not None:
+            self._log["return"] = self._last_return.name
+        self._log["children"] = { f"{n}":k.log() for n,k in enumerate(self.actions)}
+        if self._key_node is not None:
+            self._log["key_node"] = self._key_node.name
+        return self._log
 
 class OR(BTNode):
     def __init__(self, actions: list[BTNode], name: str|None = None):
         super().__init__(name)
         self.actions = actions
+        self._last_return = None
+        self._key_node = None
+
     
     def run(self,object):
         for action in self.actions:
             w = action.run(object)
             if w in [Status.S, Status.O]:
+                self._key_node = action
+                self._last_return = w
                 return w        
+        self._key_node = None
+        self._last_return = Status.F
         return Status.F
+    
+    def log(self):
+        self._log["kind"] = "AND"
+        if self._last_return is not None:
+            self._log["return"] = self._last_return.name
+        self._log["children"] = { f"{n}":k.log() for n,k in enumerate(self.actions)}
+        if self._key_node is not None:
+            self._log["key_node"] = self._key_node.name        
+        return self._log
 
 class NOT(BTNode):
     def __init__(self, A1:BTNode, name: str|None = None):
         super().__init__(name)
         self.A1 = A1
+        self._last_return = None
+        
 
     def run(self, object):
         w =self.A1.run(object)
         if w == Status.F:
+            self._last_return = Status.S
             return Status.S
         if w == Status.S:
+            self._last_return = Status.F
             return Status.F
+        self._last_return = w
         return w 
+    
+    def log(self):
+        self._log["kind"] = "NOT"
+        if self._last_return is not None:
+            self._log["return"] = self._last_return.name
+        self._log["children"] = { "1": self.A1.log()}
+        return self._log
+  
 
 class ALWAYS_F(BTNode):
     def __init__(self, A1:BTNode, name: str|None = None):
         super().__init__(name)
         self.A1 = A1
+        self._last_return = None
 
     def run(self, object):
         w =self.A1.run(object)
+        self._last_return = Status.F
         if w == Status.F:
             return Status.F
         if w == Status.S:
             return Status.F
+        self._last_return = w
         return w 
+    
+    def log(self):
+        self._log["kind"] = "ALWAYS_F"
+        if self._last_return is not None:
+            self._log["return"] = self._last_return.name
+        self._log["children"] = { "1": self.A1.log()}
+        return self._log
+    
+class O_ON_F(BTNode):
+    def __init__(self, A1:BTNode, name: str|None = None):
+        super().__init__(name)
+        self.A1 = A1
+        self._last_return = None
+
+    def run(self, object):
+        w =self.A1.run(object)
+        self._last_return = Status.O
+        if w == Status.F:
+            return Status.O
+        if w == Status.O:
+            return Status.O
+        self._last_return = w
+        return w 
+    
+    def log(self):
+        self._log["kind"] = "O_ON_F"
+        if self._last_return is not None:
+            self._log["return"] = self._last_return.name
+        self._log["children"] = { "1": self.A1.log()}
+        return self._log
 
 class ALWAYS_S(BTNode):
     def __init__(self, A1:BTNode, name: str|None = None):
         super().__init__(name)
         self.A1 = A1
+        self._last_return = None
 
     def run(self, object):
         w =self.A1.run(object)
+        self._last_return = Status.S
         if w == Status.F:
             return Status.S
         if w == Status.S:
             return Status.S
+        self._last_return = w
         return w
 
+    def log(self):
+        self._log["kind"] = "ALWAYS_S"
+        if self._last_return is not None:
+            self._log["return"] = self._last_return.name
+        self._log["children"] = { "1": self.A1.log()}
+        return self._log
 
 class LOGIC(BTNode):
     def __init__(self, fun: Callable[[Any], bool], name: str|None = None):
         super().__init__(name)
         self.fun = fun
+        self._last_return = None
  
     def run(self, object):
         if self.fun(object):
+            self._last_return = Status.S
             return Status.S
+        self._last_return = Status.F
         return Status.F
-        
+
+    def log(self):
+        self._log["kind"] = "LOGIC"
+        if self._last_return is not None:
+            self._log["return"] = self._last_return.name
+        return self._log
+
+
 class GEN(BTNode):
     """
     Creates a dinamic plan. 
@@ -135,12 +248,15 @@ class GEN(BTNode):
     and returns a BTNode object
             
     """
-    def __init__(self, generator:Callable[[Any], BTNode], name: str|None = None, reset_on_failure = True, reset_on_success = True):
+    def __init__(self, generator:Callable[[Any], BTNode], name: str|None = None, reset_on_failure = True, reset_on_success = True, timeout = 1000000):
         super().__init__(name)
         self.generator = generator
         self.plan = None
         self.reset_on_success = reset_on_success
         self.reset_on_failure = reset_on_failure
+        self._last_return = None
+        self.timeout = timeout
+        self.last_timeout = 0
     
     def run(self, object):
         if self.plan is None:
@@ -154,19 +270,21 @@ class GEN(BTNode):
             self.plan = None
         if w == Status.S and self.reset_on_failure:
             self.plan = None
-        return w        
+        if self.timeout > 0:
+            if object.turn - self.last_timeout > self.timeout:
+                self.plan = None
+                self.last_timeout = object.turn
+        self._last_return = w
+        return w
+    
+    def log(self):
+        self._log["kind"] = "GEN"
+        if self._last_return is not None:
+            self._log["return"] = self._last_return.name
+        if self.plan is not None:
+            self._log["children"] = { "0": self.plan.log()}
+        return self._log
 
-# class MSG(BTNode):
-#     def __init__(self, message, nxt = "and"):
-#         self.message = message
-#         self.nxt = nxt
-
-#     def run(self, object):
-#         print(self.message)
-#         if self.nxt == "and":
-#             return Status.S
-#         if self.nxt == "or":
-#             return Status.F
  
 class GATE(BTNode):
     """
@@ -183,17 +301,29 @@ class GATE(BTNode):
         self._open = False
         self.open_cond = open_cond
         self.close_cond = close_cond
+        self._last_return = None
 
     def run(self, object):
         if not self._open and self.open_cond(object):
             self._open = True
+            self._last_return = Status.S
             return Status.S
         if not self._open and not self.open_cond(object):
+            self._last_return = Status.F
             return Status.F
         if self._open and self.close_cond(object):
             self._open = False
+            self._last_return = Status.F
             return Status.F
+        self._last_return = Status.S
         return Status.S
+    
+    def log(self):
+        self._log["kind"] = "GATE"
+        if self._last_return is not None:
+            self._log["return"] = self._last_return.name
+        self._log["open"] = self._open
+        return self._log
         
 ##### Core interaction goes here does not justifies a file
 
@@ -207,6 +337,7 @@ class Interaction(BTNode):
         else:
             self.command = command + ' ' + resource
         self.started = False
+        self._last_return = None
 
 
     def run(self,object):
@@ -216,9 +347,11 @@ class Interaction(BTNode):
             self.signature = signature
             object.running_routine.append([self.command, signature])
             self.started = True
+            self._last_return = Status.O
             return Status.O
         else:
-            return self.check_status(object)
+            self._last_return = self.check_status(object)
+            return self._last_return
 
     
     def check_status(self, object):
@@ -234,3 +367,10 @@ class Interaction(BTNode):
                 elif x[2] == "ok":
                     return Status.S
         return Status.F
+    
+    def log(self):
+        self._log["kind"] = "Interaction"
+        if self._last_return is not None:
+            self._log["return"] = self._last_return.name
+        self._log["command"] = self.command
+        return self._log

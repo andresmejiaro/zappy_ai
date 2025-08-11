@@ -1,4 +1,4 @@
-
+import json
 
 
 class Party():
@@ -10,6 +10,29 @@ class Party():
         ps =[1,2,2,4,4,6,6,1]
         return ps[lv-1]
     
+    def party_message_processer(self, message, direction):
+        processers = {
+            "lfg": self.bc_lfg_processer,#generated
+            "join": self.bc_join_processer, #generated
+            "inventory": self.bc_inventory_processer, #generated
+            "closed": self.bc_closed_party, #generated
+            "disband": self.bc_disband, #generated
+            "ready": self.bc_incantation_ready
+         }
+
+        try:
+            message_dict = json.loads(message)
+        except Exception as e:
+            print(f"Could not decript message {e}")
+            return
+        kind = message_dict.get("kind")
+        if kind is not None and kind in processers.keys():
+            processers[kind](message_dict, direction)
+            return
+        print("Recived random broadcast")
+
+
+
     def reset_party(self):
         """
         Resets variables related to the partys
@@ -85,6 +108,7 @@ class Party():
         member = message_dict.get("name")
         if member not in self.party_members_ready:
             self.party_members_ready.append(member)
+        self.sound_direction = direction
     # def bc_complete_processer(self,message_dict, direction):
     #     if message_dict.get("party_name") != self.party_name:
     #         return
@@ -113,4 +137,4 @@ class Party():
             return
         self.reset_party()
 
-    
+        

@@ -30,16 +30,10 @@ def drop(agent: Agent,inventory: dict) -> ct.BTNode:
 
 def closest_resource(agent: Agent, resource: str):
     """
-    Finds the coordinate of the nearest known resource that
-    is not the totem
+    Finds the coordinate of the nearest known resource 
     """
 
     found = [np.array([x,y]) for x in range(agent.size[0]) for y in range(agent.size[1]) if resource in agent.objects[x][y]]
-    if agent.totem_pos is not None:
-        for i,x in enumerate(found):
-            if np.array_equal(x,agent.totem_pos):
-                del found[i]
-                break
     if len(found) == 0:
         return None
     
@@ -85,20 +79,9 @@ def do_i_have_inventory(agent, resources: dict, individual = False)->bool:
 
 def gather(agent,resources: dict, individual = False)->ct.BTNode:
     check = ct.LOGIC(lambda x: do_i_have_inventory(x,resources, individual), name = "gather check Inv")
-    gather_node = ct.GEN(lambda x: pick_up_multiple(x,resources), name = "gather collector")
-    roam = ct.GEN(gmov.roam, name="gather roam")
+    gather_node = ct.ALWAYS_F(ct.GEN(lambda x: pick_up_multiple(x,resources), name = "gather collector"))
+    roam = ct.ALWAYS_F(ct.GEN(gmov.roam, name="gather roam"))
     return ct.OR([check,gather_node,roam], name = f"gather {resources}")
-
-def mark_totem(agent):
-    if not np.array_equal(agent.totem_pos, agent.new_totem):
-        agent.totem_pos = agent.new_totem
-        print("New Totem Found!°")
-    else:
-        return ct.LOGIC(lambda x: False)
-    pick_a_stone = ct.GEN(lambda x: gather(x,{"linemate":1}, individual = True), name = "mark totem pickup")
-    go_to_totem = ct.GEN(gmov.go_to_totem, name = "mark totem movement")
-    drop_stone = ct.GEN(lambda x: drop(x,{"linemate":1}), name= "mark totem drop")
-    return ct.AND_P([pick_a_stone,go_to_totem,drop_stone],name= "mark totem sequence")
 
 def level_up_reqs(aclv):
     lreq =[{"linemate":1},
@@ -116,14 +99,15 @@ logic1 = lambda x: x.party.party_name is None or len(x.party.party_members_ready
 
 def level_up(agent):
     reqs = level_up_reqs(agent.level)
-    
     do_i_need_team = ct.LOGIC(lambda x: x.level <= 1, name = "do I need to team up")
     team_up = ct.OR([do_i_need_team, gtem.teaming], name = "level up teaming up")
-    gather_items = ct.GEN(lambda x: gather(x, reqs), "level up gather")
-    go_to_totem = ct.GEN(gmov.go_to_totem, name = "level up movement")
+    marco_polo= ct.OR([do_i_need_team,ct.GEN(gmov.marco_polo, name = "marco polo")], name = "no team no marco polo")
+    marco_polo2 = ct.O_ON_F(marco_polo)
+    gather_items = ct.OR([ct.GEN(lambda x: gather(x, reqs), "level up gather"),ct.ALWAYS_F(ct.GEN(gmov.roam))])
+    #i_am_ready = ct.GEN(gtem.ready_for_incantation)
     drop_items = ct.GEN(lambda x: drop(x,reqs), name= "level up drop")
-    i_am_ready = ct.GEN(gtem.ready_for_incantation)
-    wait_for_team_mates = ct.LOGIC(logic1)
+    wait_for_team_mates = ct.OR([ct.LOGIC(logic1),ct.ALWAYS_F(ct.GEN(gtem.ready_for_incantation))])
     incantation = gen_interaction("incantation")
     disband = ct.GEN(gtem.disband, name ="disbanding after level up")
-    return ct.AND_P([team_up,gather_items, go_to_totem, drop_items,i_am_ready,wait_for_team_mates, incantation,disband], name="level up sequence")
+    return ct.AND_P([team_up,gather_items, marco_polo2,wait_for_team_mates,drop_items, incantation,disband], name="level up sequence")
+

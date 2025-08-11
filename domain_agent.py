@@ -28,11 +28,7 @@ class Agent():
         self.inventory ={"nourriture": 10, "linemate": 0, "deraumere": 0, "sibur": 0, "mendiane": 0, "phiras": 0, "thystame": 0} # starting inventory updates whenever inventory is seen
         self.level = 1 #level
         self.objects_countdown = None #timeouts of seen parts of the map, forgets
-        self.last_turn = 0 #for control of timeouts last seen turn
-        self.new_totem = np.array([0,0]) # for found totems
-        self.new_totem_size = 0 # for found totems
-        self.totem_pos = np.array([0,0]) # for starting totem
-        self.totem_size = 0 # starting totem
+        self.last_turn = -1 #for control of timeouts last seen turn
         self.name = id(self) #give yourself a name
         self.party = Party(self) #reset info about teams
 
@@ -77,6 +73,7 @@ class Agent():
         self.inventory["nourriture"] -= time_diff/126
         if time_diff > 0:
             print(f"food: {self.inventory["nourriture"]}")
+            self.update_tree = True
         self.last_turn = self.turn
         if self.objects_countdown is not None:
             breaks = -(self.objects_countdown - self.turn) > 100
@@ -84,12 +81,7 @@ class Agent():
                 for y in range(self.size[1]):
                     if breaks[x,y]:
                         self.objects[x][y] = []
-                    if self.objects[x][y].count("linemate") >= self.totem_size:
-                        self.new_totem = np.array([x,y])
-                        self.new_totem_size = self.objects[x][y].count("linemate")
-                    if np.array_equal(self.totem_pos,np.array([x,y])):
-                        if len(self.objects[x][y]) != 0:
-                            self.totem_size = self.objects[x][y].count("linemate")
+
 
     def avance_processer(self, command, x= None):
         print(f"Old position: {self.pos}")
@@ -101,9 +93,9 @@ class Agent():
         self.resolve_from_running_routine("avance")
     
     def droite_processer(self,command,x = None):
-        print(f"Old facing: {DIRECTIONS[self.facing]}")
+        #print(f"Old facing: {DIRECTIONS[self.facing]}")
         self.facing = (self.facing + 3) % 4
-        print(f"New facing: {DIRECTIONS[self.facing]}")
+        #print(f"New facing: {DIRECTIONS[self.facing]}")
         self.turn += 7
         self.resolve_from_running_routine("droite")
         
@@ -231,6 +223,7 @@ class Agent():
     def niveau_actuel_processer(self,command):
         levels = command.split(":")
         self.level = int(levels[1])
+        self.turn += 300
         self.resolve_from_running_routine("incantation")
 
     def message_processer(self,command):
@@ -238,7 +231,7 @@ class Agent():
         split_command1 = command.split(",",maxsplit = 1)
         direction = int(split_command1[0].split()[1])
         message = split_command1[1]
-        self.party_message_processer(message, direction)
+        self.party.party_message_processer(message, direction)
 
 
     def processer_select(self,command: str):
@@ -256,7 +249,7 @@ class Agent():
             return self.niveau_actuel_processer
         if command.startswith("message"):
             return self.message_processer
-        print(f"Unknown command type {command} returning empty hander. Command will be ignored")
+        print(f"Unknown command type {command} returning empty handler. Command will be ignored")
         return lambda x: None
     
     ### process command from server
@@ -277,109 +270,19 @@ class Agent():
             return y
         else:
             return ""
-
-    def party_message_processer(self, message, direction):
-        processers = {
-            "lfg": self.party.bc_lfg_processer,#generated
-            "join": self.party.bc_join_processer, #generated
-            "inventory": self.party.bc_inventory_processer, #generated
-            "closed": self.party.bc_closed_party, #generated
-            "disband": self.party.bc_disband #generated
-        }        
-
-        try:
-            message_dict = json.loads(message)
-        except Exception as e:
-            print(f"Could not decript message {e}")
-            return
-        kind = message_dict.get("kind")
-        if kind is not None and kind in processers.keys():
-            processers[kind](message_dict, direction)
-            return
-        print("Recived random broadcast")
         
+    def sound_direction(self,direction: int):
+        if direction != 0:
+            rot45 = np.array([[1,1], [-1,1]])
+            rotn = np.linalg.matrix_power(rot45,(direction - 1))
+            to_ret = rotn.dot(DIRECTIONS[self.facing])
+            if to_ret[0] != 0:
+                to_ret = to_ret/to_ret[0]
+            else:
+                to_ret = to_ret/to_ret[1]
+            return to_ret
+        else:
+            return np.array([0,0])
 
-    # def bc_lfg_processer(self, message_dict, direction):
-    #     """
-    #     Recieves messages of poosible lfg.
 
-    #     Tested
-    #     generator written
-    #     """
-    #     lvl = int(message_dict.get("lvl",-1))
-    #     if self.party_closed == True:
-    #         return
-    #     if lvl != self.level + 1:
-    #         return
-    #     remote_name =message_dict.get("party_name")
-    #     if self.party_name is not None:
-    #         if remote_name < self.party_name:
-    #             return
-    #         else:
-    #             self.reset_party()  
-    #     self.party_name = remote_name
-    #     self.party_role = 1
         
-        
-
-    # def bc_join_processer(self,message_dict, direction):
-    #     """
-    #     generator written
-    #     """
-    #     if message_dict.get("party_name") != self.party_name and self.party_role != 3:
-    #         return 
-    #     if self.party_closed:
-    #         return
-    #     self.party_members.append(message_dict.get("name"))
-    #     if len(self.party_members) >= self.party_size:
-    #         while len(self.party_members) > self.party_size:
-    #             self.party_members.pop()       
-
-    # def bc_inventory_processer(self, message_dict,direction):
-    #     member = message_dict.get("name")
-    #     if member not in self.party_members:
-    #         return
-    #     inventory = message_dict.get("inventory")
-    #     self.party_inventories[member] = inventory
-
-    # def bc_complete_processer(self,message_dict, direction):
-    #     if message_dict.get("party_name") != self.party_name:
-    #         return
-    #     self.colection_complete = True
-
-    # def bc_closed_party(self, message_dict,direction):
-    #     """
-    #     Message to send when the party is full
-    #     tested
-    #     """       
-    #     if message_dict.get("party_name") != self.party_name and self.party_role != 1:
-    #         return
-    #     if self.name not in message_dict.get("members"):
-    #         self.reset_party()
-    #     self.party_role = 2
-    #     self.party_closed = True
-    #     self.party_members = message_dict.get("members")
-
-    # def bc_disband(self, message_dict,direction):
-    #     """
-    #     disbands if the leader says so
-
-    #     tested
-    #     """
-    #     if message_dict.get("party_name") != self.party_name:
-    #         return
-    #     self.reset_party()
-
-    # def reset_party(self):
-    #     """
-    #     Resets variables related to the partys
-    #     """
-    #     self.party_name = None # for partying up
-    #     self.party_role = 0 # 0 = none ,1 = applicant, 2=member, 3 = master
-    #     self.party_members = [] #who is in our party
-    #     self.party_inventories = {} #inventories of our party members
-    #     self.colection_complete = False # is what we are doing done?
-    #     self.party_size = 4 # party size limit 
-    #     self.party_closed = False # did I send closing message
-
-

@@ -33,6 +33,7 @@ def closed_party_gen(x):
     return gen_interaction("broadcast",json.dumps(message))
 
 def disband(x):
+    ret = 1
     if x.party.party_name is None:
         ret = 0
     message = {}
@@ -61,7 +62,6 @@ def ready_for_incantation(x):
 
 
 am_i_leader = ct.LOGIC(lambda x: x.party.party_name is None or (x.party.party_role == 3 and len(x.party.party_members)< x.party.party_size),name = "am_i_leader logic")
-
 is_party_not_closed_can_close = ct.LOGIC(lambda x: not x.party.party_closed and x.party.party_role == 3 and len(x.party.party_members) >= x.party.party_size )
 do_i_join =ct.LOGIC(lambda x: x.party.party_role == 1, name ="am I a silent applicant?")
 do_i_share_inv =ct.LOGIC(lambda x: x.party.party_closed and len(x.party.party_inventories.keys()) < x.party.party_size - 1,"is everyone ready to share")
@@ -79,3 +79,4 @@ step4 = ct.AND([do_i_share_inv,ct.GEN(share_inventory), ct.LOGIC(lambda x:False)
 
 
 teaming = ct.OR([step1,step2, step3, step4, did_i_do_it], name = "teaming main selector")
+   
