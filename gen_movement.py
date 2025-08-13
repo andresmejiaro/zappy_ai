@@ -5,6 +5,7 @@ from domain_agent import Agent
 import numpy as np
 import random 
 import gen_teaming as gtem
+from gen_common import gen_interaction
 
 DIRECTIONS = list(map(np.array,[[1,0],[0,-1],[-1,0],[0,1]]))
 import random 
@@ -64,7 +65,7 @@ def move_to(target: np.array, agent:Agent, name: None|str = None) -> BTNode:
             plan += rotate_create(facing, 2)
             xfacing = 2   
        
-        nmoves = np.abs(displacement[0])
+        nmoves = int(np.abs(displacement[0]))
         w = map(lambda x: ct.Interaction("avance"), range(nmoves))
         plan.extend(list(w))
 
@@ -74,10 +75,10 @@ def move_to(target: np.array, agent:Agent, name: None|str = None) -> BTNode:
         elif displacement[1] < 0:
             plan += rotate_create(xfacing,1)
         
-        nmoves = np.abs(displacement[1])
+        nmoves = int(np.abs(displacement[1]))
         w = map(lambda x: ct.Interaction("avance"), range(nmoves))
         plan.extend(list(w))
-        return ct.AND(plan)
+        return ct.AND(plan, "move to plan")
 
 def roam(agent: Agent):
     r = [ct.Interaction("voir"), ct.Interaction("droite"), ct.Interaction("voir") , ct.Interaction("droite") , ct.Interaction("voir") , ct.Interaction("droite") , ct.Interaction("voir") ] 
@@ -89,16 +90,50 @@ def roam(agent: Agent):
     return ct.AND(actions= r , name="roam Generated")
 
 
-def marco_polo(agent: Agent):
-    if agent.party.party_role == 3:
-        return ct.GEN(gtem.ready_for_incantation, name ="leader marco polo announce")
-    try:
-        sound_dir = agent.party.sound_direction()
-    except:
-         return ct.LOGIC(lambda x: False)
-    if np.array_equal(sound_dir, np.array([0,0])):
-          return ct.GEN(gtem.ready_for_incantation, name = "follower marco polo complete")
-    target = agent.pos + sound_dir
-    return ct.GEN(lambda x: move_to(target, x), "marco polo step")
+
+def marco_polo_screamer(agent: Agent):
+    is_everyone_ready = ct.LOGIC(lambda x: len(x.party.party_members_ready) == len(x.party.party_members), name = "Is everyone here?")
+    keep_screaming = ct.ALWAYS_F(ct.GEN(gtem.ready_for_incantation, name = "scream so you get here"),
+                                 name = "screaming does not make you succeed")
+    return ct.OR([is_everyone_ready, keep_screaming], name = "marco polo screamer selector")
+    
+
+def marco_polo_step(agent:Agent):
+    if agent.party.sound_direction is not None:
+        target = agent.sound_direction(agent.party.sound_direction) + agent.pos
+    else:
+        return ct.LOGIC(lambda x: False, "No direction to step")
+    print(f"pos:{agent.pos} to:{target}")
+    return ct.GEN(lambda x: move_to(target,x),"step towards screamer")
+
+
+
+
+def marco_polo_follower(agent: Agent):
+     
+    do_i_have_direction = ct.LOGIC(lambda x: x.party.sound_direction is not None, name = "do i have direction")
+    am_i_there = ct.LOGIC(lambda x: False, name = "is the direction 0?")
+    
+    move = ct.GEN(marco_polo_step)
+    scream = ct.ALWAYS_F(ct.GEN(gtem.share_inventory, name = "scream I arrived"))
+    step3 = ct.ALWAYS_F(move, "move Success does not mean we are there")
+    step2 = ct.OR([ct.AND([am_i_there,scream], "if we are not there move"), step3], "if we arrived scream else move")
+    step1 = ct.OR([ct.AND([do_i_have_direction,step2]),ct.ALWAYS_F(gen_interaction("inventaire"))],name = "If we don't know ")
+
+    
+    return step1
+
+
+# def marco_polo(agent: Agent):
+#     if agent.party.party_role == 3:
+#         return ct.GEN(gtem.ready_for_incantation, name ="leader marco polo announce")
+#     try:
+#         sound_dir = agent.party.sound_direction()
+#     except:
+#          return ct.LOGIC(lambda x: False, "False")
+#     if np.array_equal(sound_dir, np.array([0,0])):
+#           return ct.GEN(gtem.ready_for_incantation, name = "follower marco polo complete")
+#     target = agent.pos + sound_dir
+#     return ct.GEN(lambda x: move_to(target, x), "marco polo step")
      
 

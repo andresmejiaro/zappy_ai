@@ -52,13 +52,12 @@ class Orchester():
                     self.process_input(input)
                     self.agent.food_update()
                     if  self.agent.starting >= 3:
-                        w = self.plan.run(self.agent)
-                        log = json.dumps(self.plan.log())
-                        if log != old_log:
+                        if len(self.agent.running_routine) == 0:
+                            w = self.plan.run(self.agent)
+                            log = json.dumps(self.plan.log())
                             with open(log_path, "a") as f:
                                 f.write(log + "\n")
-                            old_log = log
-                        
+                            
                                                 #if w != Status.O:
                         #    print("termine")
                     message = self.agent.generate_message(args)

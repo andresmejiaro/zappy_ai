@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 import random
 from typing import Callable, Any
+import time
 
 class Status(Enum):
     S = 1
@@ -94,8 +95,10 @@ class AND_P(BTNode):
         if self._last_return is not None:
             self._log["return"] = self._last_return.name
         self._log["children"] = { f"{n}":k.log() for n,k in enumerate(self.actions)}
-        if self._key_node is not None:
+        if self._key_node is not None and self._key_node != "done":
             self._log["key_node"] = self._key_node.name
+        elif self._key_node == "done":
+            self._log["key_node"] = "done"
         return self._log
 
 class OR(BTNode):
@@ -118,7 +121,7 @@ class OR(BTNode):
         return Status.F
     
     def log(self):
-        self._log["kind"] = "AND"
+        self._log["kind"] = "OR "
         if self._last_return is not None:
             self._log["return"] = self._last_return.name
         self._log["children"] = { f"{n}":k.log() for n,k in enumerate(self.actions)}
@@ -257,6 +260,7 @@ class GEN(BTNode):
         self._last_return = None
         self.timeout = timeout
         self.last_timeout = 0
+        self.last_log = ""
     
     def run(self, object):
         if self.plan is None:
@@ -266,9 +270,10 @@ class GEN(BTNode):
             #    print(f"Generator Failed due to {e}")
             #    return Status.F     
         w = self.plan.run(object) 
-        if w == Status.S and self.reset_on_success:
-            self.plan = None
-        if w == Status.S and self.reset_on_failure:
+        reset_S =(w == Status.S and self.reset_on_success) 
+        reset_F = (w == Status.F and self.reset_on_failure)
+        if  reset_S or reset_F:
+            self.last_log = self.plan.log()
             self.plan = None
         if self.timeout > 0:
             if object.turn - self.last_timeout > self.timeout:
@@ -283,6 +288,9 @@ class GEN(BTNode):
             self._log["return"] = self._last_return.name
         if self.plan is not None:
             self._log["children"] = { "0": self.plan.log()}
+        else:
+            self._log["children"] = { "0": self.last_log}
+            self._log["source"] = "before reset"
         return self._log
 
  
@@ -329,6 +337,11 @@ class GATE(BTNode):
 
 class Interaction(BTNode):
     def __init__(self, command, resource = '', name: str|None = None):
+        if name is None:
+            if len(resource) > 0:
+                name = command + ' ' + resource
+            else:
+                name = command
         super().__init__(name)
         self.status_ = Status.O
         self.signature = []

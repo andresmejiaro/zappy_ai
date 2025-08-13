@@ -41,7 +41,7 @@ def disband(x):
     message["party_name"] = x.party.party_name
     x.party.reset_party()
     if ret == 0:
-        return ct.LOGIC(lambda x: True)
+        return ct.LOGIC(lambda x: True, "True")
     return gen_interaction("broadcast",json.dumps(message))
 
 def share_inventory(x):
@@ -50,32 +50,37 @@ def share_inventory(x):
     message["party_name"] = x.party.party_name
     message["name"] = x.name
     message["inventory"] = x.inventory
+    x.party.bc_inventory_processer(message,0)
     return gen_interaction("broadcast",json.dumps(message))
+
 
 def ready_for_incantation(x):
     message = {}
     message["kind"] = "ready"
     message["party_name"] = x.party.party_name
     message["name"] = x.name
-    x.party.party_members_ready.append(x.name)
+    if x.name not in x.party.party_members_ready: 
+        x.party.party_members_ready.append(x.name)
     return gen_interaction("broadcast",json.dumps(message))
 
 
 am_i_leader = ct.LOGIC(lambda x: x.party.party_name is None or (x.party.party_role == 3 and len(x.party.party_members)< x.party.party_size),name = "am_i_leader logic")
-is_party_not_closed_can_close = ct.LOGIC(lambda x: not x.party.party_closed and x.party.party_role == 3 and len(x.party.party_members) >= x.party.party_size )
+is_party_not_closed_can_close = ct.LOGIC(lambda x: not x.party.party_closed and x.party.party_role == 3 and len(x.party.party_members) >= x.party.party_size , name = "is_party_not_closed_can_close")
 do_i_join =ct.LOGIC(lambda x: x.party.party_role == 1, name ="am I a silent applicant?")
 do_i_share_inv =ct.LOGIC(lambda x: x.party.party_closed and len(x.party.party_inventories.keys()) < x.party.party_size - 1,"is everyone ready to share")
-did_i_do_it =  ct.LOGIC(lambda x: x.party.party_closed and len(x.party.party_inventories.keys()) >= x.party.party_size -1 )
+did_i_do_it =  ct.LOGIC(lambda x: x.party.party_closed and len(x.party.party_inventories.keys()) >= x.party.party_size -1 , "did teaming succeeed?")
 
 #party_lead_closed = ct.AND() #step0
-step1 = ct.AND([am_i_leader,ct.GEN(lfg_gen),ct.LOGIC(lambda x:False)  ], name = "join step leader spam lfg")
+step1 = ct.AND([am_i_leader,ct.GEN(lfg_gen, name = "lfg generator"),
+                ct.LOGIC(lambda x:False, "False")  ], name = "join step leader spam lfg")
 
 
-step2 = ct.AND([is_party_not_closed_can_close,ct.GEN(closed_party_gen), ct.LOGIC(lambda x:False)], name = "join step leader send closing")
+step2 = ct.AND([is_party_not_closed_can_close,ct.GEN(closed_party_gen, name = "closed party generator"),
+                 ct.LOGIC(lambda x:False, "False")], name = "close party condition ok")
 
-step3 = ct.AND([do_i_join, ct.GEN(join_party_gen), ct.LOGIC(lambda x:False)], name="joining logic")
+step3 = ct.AND([do_i_join, ct.GEN(join_party_gen, name = "Join party generator"), ct.LOGIC(lambda x:False, "False")], name="joining logic")
 
-step4 = ct.AND([do_i_share_inv,ct.GEN(share_inventory), ct.LOGIC(lambda x:False)], name = "sync inv")
+step4 = ct.AND([do_i_share_inv,ct.GEN(share_inventory, name = "share inventory generator"), ct.LOGIC(lambda x:False, "False")], name = "sync inv")
 
 
 teaming = ct.OR([step1,step2, step3, step4, did_i_do_it], name = "teaming main selector")
