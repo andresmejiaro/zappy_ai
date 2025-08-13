@@ -124,7 +124,7 @@ class OR(BTNode):
         self._log["kind"] = "OR "
         if self._last_return is not None:
             self._log["return"] = self._last_return.name
-        self._log["children"] = { f"{n}":k.log() for n,k in enumerate(self.actions)}
+        self._log["children"] = { f"{n}":k.log() for n,k in enumerate(self.actions) if k is not None}
         if self._key_node is not None:
             self._log["key_node"] = self._key_node.name        
         return self._log

@@ -96,23 +96,6 @@ def level_up_reqs(aclv):
     return lreq[aclv - 1]
 
 
-# logic1 = lambda x: x.party.party_name is None or len(x.party.party_members_ready) == len(x.party.party_members)
-
-
-# def level_up(agent):
-#     reqs = level_up_reqs(agent.level)
-#     do_i_need_team = ct.LOGIC(lambda x: x.level <= 1, name = "do I need to team up")
-#     team_up = ct.OR([do_i_need_team, gtem.teaming], name = "level up teaming up")
-#     marco_polo= ct.OR([do_i_need_team,ct.GEN(gmov.marco_polo, name = "marco polo")], name = "no team no marco polo")
-#     marco_polo2 = ct.O_ON_F(marco_polo)
-#     gather_items = ct.OR([ct.GEN(lambda x: gather(x, reqs), "level up gather"),ct.ALWAYS_F(ct.GEN(gmov.roam))])
-#     #i_am_ready = ct.GEN(gtem.ready_for_incantation)
-#     drop_items = ct.GEN(lambda x: drop(x,reqs), name= "level up drop")
-#     wait_for_team_mates = ct.OR([ct.LOGIC(logic1),ct.ALWAYS_F(ct.GEN(gtem.ready_for_incantation))])
-#     incantation = gen_interaction("incantation")
-#     disband = ct.GEN(gtem.disband, name ="disbanding after level up")
-#     return ct.AND_P([team_up,gather_items, marco_polo2,wait_for_team_mates,drop_items, incantation,disband], name="level up sequence")
-
 
 def level_up_fail_conditions():
     """
@@ -146,7 +129,7 @@ def level_up_meetup():
     am_i_lone_wolf = ct.LOGIC(lambda x: x.level <= 1, name = "am_i_lone_wolf")
     am_i_party_leader = ct.LOGIC(lambda x: x.party.party_role == 3, name = "am I the party Leader")
     
-    screamer_logic = ct.O_ON_F(ct.GEN(gmov.marco_polo_screamer, name = "ng screaming logic"), name = "don't fail just try again")
+    screamer_logic = ct.O_ON_F(ct.GEN(gmov.marco_polo_screamer, name = "generating screaming logic"), name = "don't fail just try again")
     follower_logic = ct.O_ON_F(ct.GEN(gmov.marco_polo_follower, name = "generating follower logic"), name = "don't fail just try again")
     marco_polo = ct.OR([am_i_lone_wolf,
                             ct.AND([am_i_party_leader, screamer_logic], name = "marco polo_role selector AND"), 
@@ -157,11 +140,42 @@ def level_up_cleanup():
     return ct.GEN(gtem.disband, name ="disbanding level up cleanup")
 
 def level_up_incantation(agent):
+    am_i_lone_wolf = ct.LOGIC(lambda x: x.level <= 1, name = "am_i_lone_wolf")
     reqs = level_up_reqs(agent.level)
     drop_items = ct.GEN(lambda x: drop(x,reqs), name= "level up drop")
+    check_party_before_level_up = ct.OR([ct.AND([am_i_lone_wolf,drop_items],"check party before lvl up Selector AND"),
+                                         check_quorum(agent)], "check party before lvl up Selector OR")     
     incantation = gen_interaction("incantation")
-    return ct.AND_P([drop_items,incantation], name = "Drop and Incantate")
+    return ct.AND_P([check_party_before_level_up,incantation], name = "Drop and Incantate")
     
+
+def item_ground_count(agent,x,y,reqs:dict)->bool:
+    for key, value in reqs.items():
+        if agent.objects[x][y].count(key) < value:
+            return False
+    return True
+
+
+
+def check_quorum(agent):
+    reqs = level_up_reqs(agent.level)
+    drop_items = ct.GEN(lambda x: drop(x,reqs), name= "level up drop")
+    x = agent.pos[0] #actual coord
+    y = agent.pos[1] #actual coord
+
+    is_there_enough_ppl = ct.OR([
+        ct.LOGIC(lambda l: l.objects[x][y].count("player") >= agent.party.party_size - 1, name = "can I see ppl here?"),
+        ct.ALWAYS_F(gen_interaction("voir"), "voir not validates problem")
+    ])
+    are_the_items_in_the_ground = ct.OR([
+        ct.LOGIC(lambda l: item_ground_count(l,x,y,reqs), "is the stuff on the ground?"),
+        ct.ALWAYS_F(gen_interaction("voir"), "voir not validates problem")
+    ])
+
+    return ct.AND_P([is_there_enough_ppl,
+              drop_items,
+              are_the_items_in_the_ground
+              ])
 
 def level_up(agent):
     """

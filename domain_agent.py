@@ -10,7 +10,7 @@ random.seed(42)
 
 #Rotating to the left
 DIRECTIONS = list(map(np.array,[[1,0],[0,-1],[-1,0],[0,1]]))
-
+SOUND_DIRECTIONS = list(map(np.array,[[1,0],[1,-1],[0,-1],[-1,1],[-1,0],[-1,1],[0,1],[1,1]]))
 
 
 class Agent():
@@ -19,7 +19,7 @@ class Agent():
         self.running_routine = [] ## Messages Sent not answered
         self.unsent_commands = [] ## Messages to be sent
         self.resolved_queue = [] ## Messages Resolved includes status
-        self.starting = 0 # just started the client for handshage
+        self.starting = 0 # just started the client for handshake
         self.team = args.n # team
         self.size = np.array([10,10]) #size of the map
         self.pos = np.array([0,0]) #actual position wrt spawning point
@@ -101,9 +101,9 @@ class Agent():
         
     
     def gauche_processer(self,command,x = None):
-        print(f"Old facing: {DIRECTIONS[self.facing]}")
+        #print(f"Old facing: {DIRECTIONS[self.facing]}")
         self.facing = (self.facing + 1) % 4
-        print(f"New facing: {DIRECTIONS[self.facing]}")
+        #print(f"New facing: {DIRECTIONS[self.facing]}")
         self.turn += 7
         self.resolve_from_running_routine("gauche")
     
@@ -273,14 +273,8 @@ class Agent():
         
     def sound_direction(self,direction: int):
         if direction != 0:
-            rot45 = np.array([[1,1], [-1,1]])
-            rotn = np.linalg.matrix_power(rot45,(direction - 1))
-            to_ret = rotn.dot(DIRECTIONS[self.facing])
-            if to_ret[0] != 0:
-                to_ret = to_ret/to_ret[0]
-            else:
-                to_ret = to_ret/to_ret[1]
-            return to_ret
+            newdir = (2*self.facing + direction -1) % 8
+            return SOUND_DIRECTIONS[newdir]
         else:
             return np.array([0,0])
 

@@ -107,33 +107,35 @@ def marco_polo_step(agent:Agent):
     return ct.GEN(lambda x: move_to(target,x),"step towards screamer")
 
 
-
-
 def marco_polo_follower(agent: Agent):
      
     do_i_have_direction = ct.LOGIC(lambda x: x.party.sound_direction is not None, name = "do i have direction")
-    am_i_there = ct.LOGIC(lambda x: False, name = "is the direction 0?")
+    
+    
+    
+    ### am I there is more layered than before le old sound_direction is zero does not cut it 
+    is_the_it_inside_the_house = ct.LOGIC(lambda x: x.party.sound_direction == 0, name = "is the direction 0?")
+    is_anyone_here = ct.LOGIC(lambda a: a.objects[a.pos[0]][a.pos[1]].count("player")  > 0 , "is_anyone_here")
+    am_i_there = ct.GEN(lambda x:ct.AND_P([is_the_it_inside_the_house,
+                                  gen_interaction("voir"),
+                                  is_anyone_here,
+                                  is_the_it_inside_the_house]
+                                    ,"am i there logic"
+                                ),
+                                "am I there generator (for reset)"
+                        )
+    
+    
     
     move = ct.GEN(marco_polo_step)
-    scream = ct.ALWAYS_F(ct.GEN(gtem.share_inventory, name = "scream I arrived"))
+    scream = ct.GEN(gtem.ready_for_incantation, name = "scream I arrived")
     step3 = ct.ALWAYS_F(move, "move Success does not mean we are there")
-    step2 = ct.OR([ct.AND([am_i_there,scream], "if we are not there move"), step3], "if we arrived scream else move")
+    step2 = ct.OR([ct.AND([am_i_there,scream], "if we are there scream"), step3], "if we are not there move ")
     step1 = ct.OR([ct.AND([do_i_have_direction,step2]),ct.ALWAYS_F(gen_interaction("inventaire"))],name = "If we don't know ")
 
     
     return step1
 
 
-# def marco_polo(agent: Agent):
-#     if agent.party.party_role == 3:
-#         return ct.GEN(gtem.ready_for_incantation, name ="leader marco polo announce")
-#     try:
-#         sound_dir = agent.party.sound_direction()
-#     except:
-#          return ct.LOGIC(lambda x: False, "False")
-#     if np.array_equal(sound_dir, np.array([0,0])):
-#           return ct.GEN(gtem.ready_for_incantation, name = "follower marco polo complete")
-#     target = agent.pos + sound_dir
-#     return ct.GEN(lambda x: move_to(target, x), "marco polo step")
      
 
