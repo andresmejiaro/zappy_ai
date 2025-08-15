@@ -87,7 +87,7 @@ def roam(agent: Agent):
         r.append( ct.Interaction("droite"))
     for j in range(2*agent.level - 2 + random.randint(0,3)):
         r.append(ct.Interaction("avance"))
-    return ct.AND(actions= r , name="roam Generated")
+    return ct.AND(actions= r , name="roam master node")
 
 
 
@@ -99,12 +99,14 @@ def marco_polo_screamer(agent: Agent):
     
 
 def marco_polo_step(agent:Agent):
-    if agent.party.sound_direction is not None:
-        target = agent.sound_direction(agent.party.sound_direction) + agent.pos
+    if agent.party.marco_polo_target is not None:
+        target = agent.party.marco_polo_target  
+    elif agent.party.sound_direction is not None:
+        target = agent.sound_direction(agent.party.sound_direction) + agent.party.pos_at_sound
     else:
         return ct.LOGIC(lambda x: False, "No direction to step")
     print(f"pos:{agent.pos} to:{target}")
-    return ct.GEN(lambda x: move_to(target,x),"step towards screamer")
+    return ct.GEN(lambda x: move_to(target,x),"step towards screamer, marco_polo_step main node")
 
 
 def marco_polo_follower(agent: Agent):
@@ -127,11 +129,11 @@ def marco_polo_follower(agent: Agent):
     
     
     
-    move = ct.GEN(marco_polo_step)
+    move = ct.GEN(marco_polo_step, "generator for marco polo step")
     scream = ct.GEN(gtem.ready_for_incantation, name = "scream I arrived")
     step3 = ct.ALWAYS_F(move, "move Success does not mean we are there")
     step2 = ct.OR([ct.AND([am_i_there,scream], "if we are there scream"), step3], "if we are not there move ")
-    step1 = ct.OR([ct.AND([do_i_have_direction,step2]),ct.ALWAYS_F(gen_interaction("inventaire"))],name = "If we don't know ")
+    step1 = ct.OR([ct.AND([do_i_have_direction,step2]),ct.ALWAYS_F(gen_interaction("inventaire"), "fallback marco polo step")],name = "Marco follower main node")
 
     
     return step1

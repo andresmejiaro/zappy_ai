@@ -20,6 +20,8 @@ class Party():
         self.party_inventory = {}  #agreate inventory
         self.party_members_ready = []
         self.sound_direction = None
+        self.pos_at_sound = None
+        self.marco_polo_target = None
 
     def set_party_size(self,lv):
         ps =[1,2,2,4,4,6,6,1]
@@ -81,11 +83,12 @@ class Party():
         """
         generator written
         """
-        if message_dict.get("party_name") != self.party_name and self.party_role != 3:
+        if message_dict.get("party_name") != self.party_name:
             return 
         if self.party_closed:
             return
-        self.party_members.append(message_dict.get("name"))
+        if message_dict.get("name") not in self.party_members and len(self.party_members) < self.party_size:
+          self.party_members.append(message_dict.get("name"))
         if len(self.party_members) >= self.party_size:
             while len(self.party_members) > self.party_size:
                 self.party_members.pop()       
@@ -95,6 +98,8 @@ class Party():
         tested
         generator written
         """
+        if message_dict.get("party_name") != self.party_name:
+            return 
         member = message_dict.get("name")
         if member not in self.party_members:
             return
@@ -110,6 +115,9 @@ class Party():
         if member not in self.party_members_ready:
             self.party_members_ready.append(member)
         self.sound_direction = direction
+        self.pos_at_sound = self.agent.pos.copy()
+        if direction == 0:
+            self.marco_polo_target = self.agent.pos
     # def bc_complete_processer(self,message_dict, direction):
     #     if message_dict.get("party_name") != self.party_name:
     #         return
@@ -120,10 +128,11 @@ class Party():
         Message to send when the party is full
         tested
         """       
-        if message_dict.get("party_name") != self.party_name and self.party_role != 1:
+        if message_dict.get("party_name") != self.party_name:
             return
         if self.agent.name not in message_dict.get("members"):
             self.reset_party()
+            return
         self.party_role = 2
         self.party_closed = True
         self.party_members = message_dict.get("members")

@@ -261,11 +261,13 @@ class GEN(BTNode):
         self.timeout = timeout
         self.last_timeout = 0
         self.last_log = ""
+        self.init_count = 0
     
     def run(self, object):
         if self.plan is None:
             #try:
                 self.plan = self.generator(object)
+                self.init_count += 1
             #except Exception as e:
             #    print(f"Generator Failed due to {e}")
             #    return Status.F     
@@ -284,6 +286,7 @@ class GEN(BTNode):
     
     def log(self):
         self._log["kind"] = "GEN"
+        self._log["init_count"] = self.init_count
         if self._last_return is not None:
             self._log["return"] = self._last_return.name
         if self.plan is not None:
