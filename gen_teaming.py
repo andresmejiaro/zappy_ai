@@ -9,6 +9,7 @@ def join_party_gen(x):
     message["kind"] = "join"
     message["party_name"] = x.party.party_name
     message["name"] = x.name
+    x.alive_processer(json.dumps(message))
     return gen_interaction("broadcast",json.dumps(message))
 
 def lfg_gen(x):
@@ -22,6 +23,7 @@ def lfg_gen(x):
     x.party.party_role = 3
     if not x.name in x.party.party_members:
         x.party.party_members.append(x.name)
+    x.alive_processer(json.dumps(message))
     return gen_interaction("broadcast",json.dumps(message))
 
 def closed_party_gen(x):
@@ -30,6 +32,7 @@ def closed_party_gen(x):
     message["party_name"] = x.party.party_name
     message["members"] = x.party.party_members
     x.party.party_closed = True
+    x.alive_processer(json.dumps(message))
     return gen_interaction("broadcast",json.dumps(message))
 
 def disband(x):
@@ -42,6 +45,7 @@ def disband(x):
     x.party.reset_party()
     if ret == 0:
         return ct.LOGIC(lambda x: True, "True")
+    x.alive_processer(json.dumps(message))
     return gen_interaction("broadcast",json.dumps(message))
 
 def share_inventory(x):
@@ -51,6 +55,7 @@ def share_inventory(x):
     message["name"] = x.name
     message["inventory"] = x.inventory
     x.party.bc_inventory_processer(message,0)
+    x.alive_processer(json.dumps(message))
     return gen_interaction("broadcast",json.dumps(message))
 
 
@@ -61,6 +66,7 @@ def ready_for_incantation(x):
     message["name"] = x.name
     if x.name not in x.party.party_members_ready: 
         x.party.party_members_ready.append(x.name)
+    
     return gen_interaction("broadcast",json.dumps(message))
 
 

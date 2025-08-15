@@ -101,7 +101,12 @@ def level_up_fail_conditions():
     """
     WIP
     """
-    return ct.LOGIC(lambda x: True, "True")
+     
+    incantation_ko = ct.LOGIC(lambda x: not x.party.incantation_failed, "level up failed: incantation failed")
+    
+    checker_list = ct.AND([incantation_ko],"level_up_fail_conditions main node")
+
+    return checker_list
 
 
 def level_up_team_up():

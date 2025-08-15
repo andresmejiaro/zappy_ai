@@ -22,6 +22,7 @@ class Party():
         self.sound_direction = None
         self.pos_at_sound = None
         self.marco_polo_target = None
+        self.incantation_failed = False
 
     def set_party_size(self,lv):
         ps =[1,2,2,4,4,6,6,1]
@@ -139,7 +140,7 @@ class Party():
 
     def bc_disband(self, message_dict,direction):
         """
-        disbands if the leader says so
+        disbands if the a member says so
 
         tested
         """

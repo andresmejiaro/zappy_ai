@@ -31,6 +31,8 @@ class Agent():
         self.last_turn = -1 #for control of timeouts last seen turn
         self.name = id(self) #give yourself a name
         self.party = Party(self) #reset info about teams
+        self.ppl_timeouts = {} #store when last ppl
+        self.ppl_lv = {} #agents 
 
 
     def starting_command(self, command: str):
@@ -155,7 +157,8 @@ class Agent():
     def ko_processer(self, command):
         okaiable_commands = {"prend": self.prend_processer,
                               "pose": self.pose_processer,
-                              "expulse": self.expulse_processer}    
+                              "expulse": self.expulse_processer,
+                              "incantation": self.incantation_ko}    
         for i in range(len(self.running_routine)):
             for j in okaiable_commands.keys():
                 if self.running_routine[i][0].startswith(j):
@@ -165,7 +168,11 @@ class Agent():
         print(f"ko for unknown command most likely {self.running_routine[0][0]}")
         self.resolve_from_running_routine(self.running_routine[0][0], "ko")
 
-
+    def incantation_ko(self, command,x,status = "ko"):
+        self.turn += 300
+        self.party.incantation_failed = True
+        self.resolve_from_running_routine("incantation","ko")
+        
     def elevation_en_cours_processer(self,command):
         pass
 
@@ -232,6 +239,22 @@ class Agent():
         direction = int(split_command1[0].split()[1])
         message = split_command1[1]
         self.party.party_message_processer(message, direction)
+        self.alive_processer(message) #new
+
+
+    def alive_processer(self,message):
+        try:
+            message_dict = json.loads(message)
+        except Exception as e:
+            print(f"Could not decript message {e}")
+            return
+        who = message_dict.get("name")
+        lvl = message_dict.get("lvl", -1) 
+        if who is None:
+            return
+        self.ppl_timeouts[who] = self.turn
+        if lvl != -1:
+            self.ppl_lv[who] = lvl
 
 
     def processer_select(self,command: str):
