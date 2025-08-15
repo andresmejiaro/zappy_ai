@@ -31,8 +31,8 @@ class Agent():
         self.last_turn = -1 #for control of timeouts last seen turn
         self.name = id(self) #give yourself a name
         self.party = Party(self) #reset info about teams
-        self.ppl_timeouts = {} #store when last ppl
-        self.ppl_lv = {} #agents 
+        self.ppl_timeouts = {self.name:0} #store when last ppl
+        self.ppl_lv = {self.name:1} #agents 
 
 
     def starting_command(self, command: str):
@@ -78,11 +78,24 @@ class Agent():
             self.update_tree = True
         self.last_turn = self.turn
         if self.objects_countdown is not None:
-            breaks = -(self.objects_countdown - self.turn) > 100
-            for x in range(self.size[0]):
-                for y in range(self.size[1]):
-                    if breaks[x,y]:
-                        self.objects[x][y] = []
+            needs = {
+                "nourriture": 120,      # 1 per 120 ticks
+                "linemate": 17143,      # 60000 / 3.5
+                "deraumere": 31304,     # 60000 / 1.9167
+                "sibur": 23226,         # 60000 / 2.5833
+                "phiras": 34286,        # 60000 / 1.75
+                "mendiane": 55385,      # 60000 / 1.0833
+                "thystame": 360000      # 60000 / 0.1667
+            } ## Based on subject 120 and evaluation sheet get to level 8 in 10 minutes al speed 100
+            substances_chances = {"nourriture": 0.5, "linemate": 0.3, "deraumere": 0.15, "sibur": 0.1, "mendiane": 0.1, "phiras": 0.08, "thystame": 0.05}
+            for key, value in substances_chances.items():
+                nplayers = max(1, len(self.ppl_timeouts))
+                nobj = value*self.size[0]*self.size[1]
+                breaks = -(self.objects_countdown - self.turn) > 0.25*needs[key]*np.log(0.5)/np.log(1-nplayers/nobj) ## assuming independance of picking up for each player random 0.25 for moving this from the edge case to the ez case
+                for x in range(self.size[0]):
+                    for y in range(self.size[1]):
+                        if breaks[x,y]:
+                            self.objects[x][y] = [w for w in self.objects[x][y] if w != key]
 
 
     def avance_processer(self, command, x= None):
@@ -302,4 +315,13 @@ class Agent():
             return np.array([0,0])
 
 
-        
+    def food_mask(self)-> np.array:
+        mask = np.zeros(shape=self.size)
+        for x in range(self.size[0]):
+            for y in range(self.size[1]):
+                for z in range(-(self.level + 1),self.level + 1):
+                    for w in range(-(self.level + 1),self.level + 1):
+                        x1 = (x + z) % self.size[0]
+                        y1 = (y + w) % self.size[1]
+                        mask[x,y] += 1/(1 + np.abs(z) + np.abs(w))*("nourriture" not in self.objects[x1][y1])
+        return mask

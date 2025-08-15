@@ -16,18 +16,14 @@ def rotate_create(facing:int, rtarget: int)->list[BTNode]:
     rtarget = rtarget % 4
     
     c1 = (rtarget - facing)
-    c2 = -(-rtarget + facing +4) 
-    #print(f"c1: {c1} c2:{c2}")
-    if abs(c1) >abs(c2):
-         c1 = c2
-    c2 = abs(c1)
     if c1 == 0:
         return []
-    if c1 > 0:
-         return list(map(lambda x: ct.Interaction("gauche"), range(c2)))   
-    if c1 < 0:
-         return list(map(lambda x: ct.Interaction("droite"), range(c2)))   
-        
+    if c1 == 1:
+        return[ct.Interaction("gauche")]
+    if c1 == 2:
+        return[ct.Interaction("droite"), ct.Interaction("droite")]
+    return [ct.Interaction("droite")]
+            
      
 #%%
 def shorstest_vect(array):
@@ -55,32 +51,52 @@ def move_to(target: np.array, agent:Agent, name: None|str = None) -> BTNode:
         displacement = shorstest_vect(targets) 
         if np.linalg.norm(displacement) == 0:
              return LOGIC(lambda x: True)  
-        plan = []
+        
+                       
         ### movement in x
         xfacing = facing
         if  displacement[0] > 0:
-            plan += rotate_create(facing, 0)
+            xoption = rotate_create(facing, 0)
             xfacing = 0
         elif displacement[0] < 0:
-            plan += rotate_create(facing, 2)
-            xfacing = 2   
+            xoption = rotate_create(facing, 2)
+            xfacing = 2
+        else:
+            xoption = []
+            xfacing = facing   
        
-        nmoves = int(np.abs(displacement[0]))
-        w = map(lambda x: ct.Interaction("avance"), range(nmoves))
-        plan.extend(list(w))
-
+        nmovesx = int(np.abs(displacement[0]))
+        movesx = list(map(lambda x: ct.Interaction("avance"), range(nmovesx)))
+        
         ### movement in y
         if  displacement[1] > 0:
-            plan += rotate_create(xfacing, 3)
+            yoption = rotate_create(facing, 3)
+            yfacing = 3
         elif displacement[1] < 0:
-            plan += rotate_create(xfacing,1)
+            yoption = rotate_create(facing,1)
+            yfacing = 1
+        else:
+            yoption = []
+            yfacing = facing
+
+        nmovesy = int(np.abs(displacement[1]))
+        movesy = list(map(lambda x: ct.Interaction("avance"), range(nmovesy)))
         
-        nmoves = int(np.abs(displacement[1]))
-        w = map(lambda x: ct.Interaction("avance"), range(nmoves))
-        plan.extend(list(w))
+        if len(xoption) < len(yoption): #the one you have turn less
+            plan = xoption + movesx + rotate_create(xfacing,yfacing) + movesy
+        else:
+            plan = yoption + movesy + rotate_create(yfacing,xfacing) + movesx
+        
+        
         return ct.AND(plan, "move to plan")
 
+
+
+
+
+
 def roam(agent: Agent):
+    norriture = 
     r = [ct.Interaction("voir"), ct.Interaction("droite"), ct.Interaction("voir") , ct.Interaction("droite") , ct.Interaction("voir") , ct.Interaction("droite") , ct.Interaction("voir") ] 
     nt = random.randint(0,3)
     for j in range(nt):

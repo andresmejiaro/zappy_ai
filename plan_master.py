@@ -50,5 +50,6 @@ level_up = ct.GEN(lambda x: ggat.level_up(x), name = "level up main", reset_on_f
 
 
 
-master_plan = ct.OR([find_food, level_up, ct.ALWAYS_F( gen_interaction("inventaire"), name = "ending inventaire")], name = "master plan")                         
+#master_plan = ct.OR([find_food, level_up, ct.ALWAYS_F( gen_interaction("inventaire"), name = "ending inventaire")], name = "master plan")                         
 
+master_plan = ct.ALWAYS_F(ct.OR([ct.GEN(lambda x: ggat.pick_up(x,"nourriture"),"pick up food generator"),ct.GEN(gmov.roam)]))
