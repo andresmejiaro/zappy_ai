@@ -65,18 +65,10 @@ class Agent():
             if self.starting != 4:
                 self.size = np.array(list(map(int,coords)))
                 self.objects = [[[] for y in range(self.size[1])] for x in range(self.size[0])]
-                self.objects_countdown = np.zeros(self.size)
+                self.objects_countdown = np.zeros(self.size) 
                 self.starting += 1
 
-    
-    def food_update(self):
-        #update 
-        time_diff = self.turn - self.last_turn
-        self.inventory["nourriture"] -= time_diff/126
-        if time_diff > 0:
-            print(f"food: {self.inventory["nourriture"]}")
-            self.update_tree = True
-        self.last_turn = self.turn
+    def objects_cooldown(self): 
         if self.objects_countdown is not None:
             needs = {
                 "nourriture": 120,      # 1 per 120 ticks
@@ -96,6 +88,27 @@ class Agent():
                     for y in range(self.size[1]):
                         if breaks[x,y]:
                             self.objects[x][y] = [w for w in self.objects[x][y] if w != key]
+
+    def ppl_cooldown(self):
+        diff = {key:value  - self.turn for key, value in self.ppl_timeouts if self.turn - value  > 400}
+        if len(diff) > 0:
+            for key in diff.keys():
+                if key in self.party.party_members:
+                    self.party.dead_member = True
+                self.ppl_timeouts.pop(key, None)
+                self.ppl_lv.pop(key,None)
+
+    
+    def food_update(self):
+        #update 
+        time_diff = self.turn - self.last_turn
+        self.inventory["nourriture"] -= time_diff/126
+        if time_diff > 0:
+            print(f"food: {self.inventory["nourriture"]}")
+            self.update_tree = True
+        self.last_turn = self.turn
+        self.objects_cooldown()
+        self.ppl_cooldown()
 
 
     def avance_processer(self, command, x= None):
@@ -315,7 +328,7 @@ class Agent():
             return np.array([0,0])
 
 
-    def food_mask(self)-> np.array:
+    def uncertanty_mask(self)-> np.array:
         mask = np.zeros(shape=self.size)
         for x in range(self.size[0]):
             for y in range(self.size[1]):
@@ -323,5 +336,15 @@ class Agent():
                     for w in range(-(self.level + 1),self.level + 1):
                         x1 = (x + z) % self.size[0]
                         y1 = (y + w) % self.size[1]
-                        mask[x,y] += 1/(1 + np.abs(z) + np.abs(w))*("nourriture" not in self.objects[x1][y1])
+                        mask[x,y] += 1/(1 + np.abs(z) + np.abs(w))*(1- np.exp(-0.015*(self.turn - self.objects_countdown[x1,y1])))
         return mask
+    
+    def distance_matrix(self) -> np.ndarray:
+        W, H = self.size
+        px, py = self   .pos
+        X, Y = np.indices((W, H))
+        dx = np.abs(X - px); dy = np.abs(Y - py)
+        dx = np.minimum(dx, W - dx)
+        dy = np.minimum(dy, H - dy)
+        return (dx + dy).astype(int)
+

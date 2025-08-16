@@ -92,18 +92,49 @@ def move_to(target: np.array, agent:Agent, name: None|str = None) -> BTNode:
 
 
 
+# def distace_matrix(self, agent: Agent)
+#     def distance(target):
+#             position = agent.pos
+#             target1 = target + DIRECTIONS[0] * agent.size[0]
+#             target2 = target - DIRECTIONS[0] * agent.size[0]
+#             target3 = target + DIRECTIONS[1] * agent.size[1]
+#             target4 = target - DIRECTIONS[1] * agent.size[1]
+#             target5 = target + DIRECTIONS[0] * agent.size[0] + DIRECTIONS[1] * agent.size[1]
+#             target6 = target + DIRECTIONS[0] * agent.size[0] - DIRECTIONS[1] * agent.size[1]
+#             target7 = target - DIRECTIONS[0] * agent.size[0] + DIRECTIONS[1] * agent.size[1]
+#             target8 = target - DIRECTIONS[0] * agent.size[0] - DIRECTIONS[1] * agent.size[1]
+#             targets = [target, target1, target2,target3, target4, target5, target6, target7, target8]
+#             targets = list(map(lambda x: x - position, targets))
+#             displacement = shorstest_vect(targets) 
+#             return np.abs(displacement).sum(axis = -1):
+#     return np.array([distance(np.array([x,y],shape= self.size)) for x in range(self.size[0]) for y in range(self.size[1]) ])  
+
+
+
+
+
+# def roam(agent: Agent):
+#     r = []
+#     nt = random.randint(0,3)
+#     for j in range(nt):
+#         r.append( ct.Interaction("droite"))
+#     for j in range(2*agent.level - 2 + random.randint(0,3)):
+#         r.append(ct.Interaction("avance"))
+#     r.extend([ct.Interaction("voir") ]) 
+#     return ct.AND(actions= r , name="roam master node")
 
 
 
 def roam(agent: Agent):
-    norriture = 
-    r = [ct.Interaction("voir"), ct.Interaction("droite"), ct.Interaction("voir") , ct.Interaction("droite") , ct.Interaction("voir") , ct.Interaction("droite") , ct.Interaction("voir") ] 
-    nt = random.randint(0,3)
-    for j in range(nt):
-        r.append( ct.Interaction("droite"))
-    for j in range(2*agent.level - 2 + random.randint(0,3)):
-        r.append(ct.Interaction("avance"))
-    return ct.AND(actions= r , name="roam master node")
+    U = agent.uncertanty_mask()
+    D = agent.distance_matrix()
+    score = U / (1.0 + D)**2
+    score[agent.pos[0], agent.pos[1]] = -np.inf   # <-- force D>=1
+    tx, ty = np.unravel_index(np.argmax(score), score.shape)
+    target = np.array([tx, ty], dtype=int)
+    r = [ct.GEN(lambda a: move_to(target, a), "roam move to target"),
+         ct.Interaction("voir")]
+    return ct.AND(actions=r, name="roam master node")
 
 
 

@@ -103,8 +103,9 @@ def level_up_fail_conditions():
     """
      
     incantation_ko = ct.LOGIC(lambda x: not x.party.incantation_failed, "level up failed: incantation failed")
-    
-    checker_list = ct.AND([incantation_ko],"level_up_fail_conditions main node")
+    dead_party_member = ct.LOGIC(lambda x: not x.dead_member, "anyone died?")
+
+    checker_list = ct.AND([incantation_ko, dead_party_member],"level_up_fail_conditions main node")
 
     return checker_list
 
