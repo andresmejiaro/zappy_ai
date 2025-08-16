@@ -125,16 +125,41 @@ def move_to(target: np.array, agent:Agent, name: None|str = None) -> BTNode:
 
 
 
+# def roam (agent:Agent):
+#     target = agent.pos.copy()
+#     nt = random.randint(-2,2)
+#     target[0] = (target[0] + nt) % agent.size[0]
+#     nt = random.randint(-2,2)
+#     target[1] = (target[1] + nt) % agent.size[1]
+#     plan = ct.AND([
+#         ct.GEN(lambda x: move_to(target,x)),
+#         gen_interaction("voir"),
+#         gen_interaction("droite"),
+#         gen_interaction("voir"),
+#         gen_interaction("droite"),
+#         gen_interaction("voir"),
+#         gen_interaction("droite"),
+#         gen_interaction("voir")
+#     ], "roam brownian")
+#     return plan
+
+
+
 def roam(agent: Agent):
     U = agent.uncertanty_mask()
     D = agent.distance_matrix()
-    score = U / (1.0 + D)**2
+    score = U #/ (1.0 + D)**2
     score[agent.pos[0], agent.pos[1]] = -np.inf   # <-- force D>=1
     tx, ty = np.unravel_index(np.argmax(score), score.shape)
     target = np.array([tx, ty], dtype=int)
     r = [ct.GEN(lambda a: move_to(target, a), "roam move to target"),
-         ct.Interaction("voir")]
-    return ct.AND(actions=r, name="roam master node")
+         ct.Interaction("voir"),gen_interaction("droite"),
+         gen_interaction("voir"),
+         gen_interaction("droite"),
+         gen_interaction("voir"),
+         gen_interaction("droite"),
+         gen_interaction("voir")]
+    return ct.AND(actions=r, name="roam master node infobased")
 
 
 

@@ -48,13 +48,13 @@ level_up = ct.GEN(lambda x: ggat.level_up(x), name = "level up main", reset_on_f
 
 #gooble = ct.AND([ct.LOGIC(lambda x: np.array_equal(ggat.closest_resource(x,"nourriture"),x.pos ) ), gen_interaction("prend", "nourriture") ], name = "oportunistic food")
 
-am_I_almost_declared_dead = ct.AND([ct.LOGIC(lambda x: x.turn - x.ppl_timeouts[x.name]  >= 350, "am I missing?"),
+am_I_almost_declared_dead = ct.AND([ct.LOGIC(lambda x: x.turn - x.ppl_timeouts.get(x.name,x.turn)  >= 350, "am I missing?"),
                                     ct.GEN(gtem.share_inventory)
                                     ])
 
 
 
 
-master_plan = ct.OR([am_I_almost_declared_dead, find_food, level_up, ct.ALWAYS_F( gen_interaction("inventaire"), name = "ending inventaire")], name = "master plan")                         
-
+master_plan = ct.OR([am_I_almost_declared_dead, level_up, ct.ALWAYS_F( gen_interaction("inventaire"), name = "ending inventaire")], name = "master plan")                         
+#master_plan = ct.OR([am_I_almost_declared_dead, find_food, level_up, ct.ALWAYS_F( gen_interaction("inventaire"), name = "ending inventaire")], name = "master plan")                         
 #master_plan = ct.ALWAYS_F(ct.OR([ct.GEN(lambda x: ggat.pick_up(x,"nourriture"),"pick up food generator"),ct.GEN(gmov.roam)]))

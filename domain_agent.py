@@ -90,7 +90,7 @@ class Agent():
                             self.objects[x][y] = [w for w in self.objects[x][y] if w != key]
 
     def ppl_cooldown(self):
-        diff = {key:value  - self.turn for key, value in self.ppl_timeouts if self.turn - value  > 400}
+        diff = {key:value  - self.turn for key, value in self.ppl_timeouts.items() if self.turn - value  > 400}
         if len(diff) > 0:
             for key in diff.keys():
                 if key in self.party.party_members:
@@ -136,12 +136,12 @@ class Agent():
         self.resolve_from_running_routine("gauche")
     
     def prend_processer(self,command,x,status = "ok"):
+        things = x.split(" ")
         if status == "ok":
-            things = x.split(" ")
             print(f"Picking up {things[1]}")
             self.inventory[things[1]] += 1
-            if things[1] in self.objects[self.pos[0]][self.pos[1]]:
-                self.objects[self.pos[0]][self.pos[1]].remove(things[1])
+        if things[1] in self.objects[self.pos[0]][self.pos[1]]:
+            self.objects[self.pos[0]][self.pos[1]].remove(things[1])
         self.turn += 7
         self.resolve_from_running_routine(x, status)
 

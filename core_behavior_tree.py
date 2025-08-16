@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 import random
 from typing import Callable, Any
-import time
+import json
 
 class Status(Enum):
     S = 1
@@ -25,7 +25,7 @@ class BTNode(ABC):
         return f"{cls}(name = {self.name!r})"
  
     @abstractmethod
-    def run(self, object):
+    def run(self, object, log_seq):
         pass
 
     @abstractmethod
@@ -44,10 +44,11 @@ class AND(BTNode):
         self._key_node = None
     
     
-    def run(self,object):
+    def run(self,object, log_seq = []):
+        log_seq = log_seq.copy() + [self.name]
         for action in self.actions:
             self._key_node = action
-            w = action.run(object)
+            w = action.run(object, log_seq)
             if w != Status.S:
                 self._last_return = w         
                 return w
@@ -75,12 +76,13 @@ class AND_P(BTNode):
         self._last_return = None
         self._key_node = None
     
-    def run(self,object):
+    def run(self,object, log_seq = []):
+        log_seq = log_seq.copy() + [self.name]
         if self.action_n >= len(self.actions):
             self._key_node = "done"
             self._last_return = Status.S
             return Status.S
-        w = self.actions[self.action_n].run(object)
+        w = self.actions[self.action_n].run(object, log_seq)
         self._key_node = self.actions[self.action_n]
         if w != Status.S:
             self._last_return = w
@@ -109,9 +111,10 @@ class OR(BTNode):
         self._key_node = None
 
     
-    def run(self,object):
+    def run(self,object, log_seq = []):
+        log_seq = log_seq.copy() + [self.name]
         for action in self.actions:
-            w = action.run(object)
+            w = action.run(object, log_seq)
             if w in [Status.S, Status.O]:
                 self._key_node = action
                 self._last_return = w
@@ -136,7 +139,8 @@ class NOT(BTNode):
         self._last_return = None
         
 
-    def run(self, object):
+    def run(self, object, log_seq = []):
+        log_seq = log_seq.copy() + [self.name]
         w =self.A1.run(object)
         if w == Status.F:
             self._last_return = Status.S
@@ -161,8 +165,9 @@ class ALWAYS_F(BTNode):
         self.A1 = A1
         self._last_return = None
 
-    def run(self, object):
-        w =self.A1.run(object)
+    def run(self, object, log_seq = []):
+        log_seq = log_seq.copy() + [self.name]
+        w =self.A1.run(object, log_seq)
         self._last_return = Status.F
         if w == Status.F:
             return Status.F
@@ -184,8 +189,9 @@ class O_ON_F(BTNode):
         self.A1 = A1
         self._last_return = None
 
-    def run(self, object):
-        w =self.A1.run(object)
+    def run(self, object, log_seq = []):
+        log_seq = log_seq.copy() + [self.name]
+        w =self.A1.run(object, log_seq)
         self._last_return = Status.O
         if w == Status.F:
             return Status.O
@@ -207,8 +213,9 @@ class ALWAYS_S(BTNode):
         self.A1 = A1
         self._last_return = None
 
-    def run(self, object):
-        w =self.A1.run(object)
+    def run(self, object, log_seq = []):
+        log_seq = log_seq.copy() + [self.name]
+        w =self.A1.run(object, log_seq)
         self._last_return = Status.S
         if w == Status.F:
             return Status.S
@@ -230,7 +237,8 @@ class LOGIC(BTNode):
         self.fun = fun
         self._last_return = None
  
-    def run(self, object):
+    def run(self, object, log_seq = []):
+        log_seq = log_seq.copy() + [self.name]
         if self.fun(object):
             self._last_return = Status.S
             return Status.S
@@ -263,7 +271,8 @@ class GEN(BTNode):
         self.last_log = ""
         self.init_count = 0
     
-    def run(self, object):
+    def run(self, object, log_seq = []):
+        log_seq = log_seq.copy() + [self.name]
         if self.plan is None:
             #try:
                 self.plan = self.generator(object)
@@ -271,7 +280,7 @@ class GEN(BTNode):
             #except Exception as e:
             #    print(f"Generator Failed due to {e}")
             #    return Status.F     
-        w = self.plan.run(object) 
+        w = self.plan.run(object, log_seq) 
         reset_S =(w == Status.S and self.reset_on_success) 
         reset_F = (w == Status.F and self.reset_on_failure)
         if  reset_S or reset_F:
@@ -314,7 +323,8 @@ class GATE(BTNode):
         self.close_cond = close_cond
         self._last_return = None
 
-    def run(self, object):
+    def run(self, object, log_seq = []):
+        log_seq = log_seq.copy() + [self.name]
         if not self._open and self.open_cond(object):
             self._open = True
             self._last_return = Status.S
@@ -356,7 +366,8 @@ class Interaction(BTNode):
         self._last_return = None
 
 
-    def run(self,object):
+    def run(self,object, log_seq):
+        log_seq = log_seq.copy() + [self.name]
         if not self.started:
             object.unsent_commands.append(self.command)
             signature = hash(random.random())
@@ -364,9 +375,15 @@ class Interaction(BTNode):
             object.running_routine.append([self.command, signature])
             self.started = True
             self._last_return = Status.O
+            with open(f"logs/highlight_{object.name}.jsonl", "a") as f:
+                f.write(json.dumps({"t": object.turn, "name": object.name, "lvl": object.level, "path": log_seq, "s": "O"}))
+                f.flush()
             return Status.O
         else:
             self._last_return = self.check_status(object)
+            with open(f"logs/highlight_{object.name}.jsonl", "a") as f:
+                f.write(json.dumps({"t": object.turn, "name": object.name, "lvl": object.level, "path": log_seq, "s": self._last_return.name}) + "\n")
+                f.flush()
             return self._last_return
 
     

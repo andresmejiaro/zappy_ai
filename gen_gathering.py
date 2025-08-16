@@ -68,7 +68,7 @@ def pick_up_multiple(agent, resources: dict, individual = False)->ct.BTNode:
     z = ct.OR(w, name="pick_up_multiple")
     if agent.party.party_name is None:
         return z
-    return ct.AND_P([z, ct.GEN(gtem.share_inventory, "share inventory generator pick up multiple")], name = "sharing after finding")
+    return ct.AND_P([z, ct.GEN(gtem.share_inventory, "share inventory generator pick up multiple")], name = f"pick up multiple main node inv:{inv}")
 
 def do_i_have_inventory(agent, resources: dict, individual = False)->bool:
     inv = inventory_selector(agent, individual)
@@ -78,11 +78,12 @@ def do_i_have_inventory(agent, resources: dict, individual = False)->bool:
     return True 
 
 def gather(agent,resources: dict, individual = False)->ct.BTNode:
+    inv = inventory_selector(agent, individual)
     check = ct.LOGIC(lambda x: do_i_have_inventory(x,resources, individual), name = "gather check Inv")
     gather_node = ct.ALWAYS_F(ct.GEN(lambda x: pick_up_multiple(x,resources), name = "gather collector"))
     roam = ct.ALWAYS_F(ct.GEN(gmov.roam, name="gather roam"),
                        name = "roam fallback that can't suceed")
-    return ct.OR([check,gather_node,roam], name = f"gather {resources}")
+    return ct.OR([check,gather_node,roam], name = f"gather: {resources} inventory:{inv}")
 
 def level_up_reqs(aclv):
     lreq =[{"linemate":1}, #1->2
@@ -103,7 +104,7 @@ def level_up_fail_conditions():
     """
      
     incantation_ko = ct.LOGIC(lambda x: not x.party.incantation_failed, "level up failed: incantation failed")
-    dead_party_member = ct.LOGIC(lambda x: not x.dead_member, "anyone died?")
+    dead_party_member = ct.LOGIC(lambda x: not x.party.dead_member, "anyone died?")
 
     checker_list = ct.AND([incantation_ko, dead_party_member],"level_up_fail_conditions main node")
 

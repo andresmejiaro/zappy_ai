@@ -54,9 +54,9 @@ class Orchester():
                     if  self.agent.starting >= 3:
                         if len(self.agent.running_routine) == 0:
                             w = self.plan.run(self.agent)
-                            log = json.dumps(self.plan.log())
-                            with open(log_path, "a") as f:
-                                f.write(log + "\n")
+                            # log = json.dumps(self.plan.log())
+                            # with open(log_path, "a") as f:
+                            #     f.write(log + "\n")
                             
                                                 #if w != Status.O:
                         #    print("termine")
