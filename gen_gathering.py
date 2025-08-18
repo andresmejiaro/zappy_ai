@@ -42,12 +42,16 @@ def closest_resource(agent: Agent, resource: str):
 
 
 def pick_up(agent: Agent, resource: str) -> ct.BTNode:
-    x = closest_resource(agent, resource)
-    if x is None or len(x) == 0:
-        return ct.GEN(gmov.roam)
-    actions = move_to(x, agent)
-    actions = [actions, ct.Interaction("prend",resource)]
-    return ct.AND(actions, name = f"pick up {resource}")  
+    def pick_up_plan(agent):
+        x = closest_resource(agent, resource)
+        if x is None or len(x) == 0:
+            return ct.LOGIC(lambda x: False)
+        actions = move_to(x, agent)
+        actions = [actions, ct.Interaction("prend",resource), ct.Interaction("inventaire")]
+        return ct.AND(actions, name = f"pick up {resource}")  
+    return  ct.OR([ct.GEN(pick_up_plan), 
+                   ct.ALWAYS_F(ct.GEN(gmov.roam))])
+ 
 
 
 def pick_up_multiple(agent, resources: dict, individual = False)->ct.BTNode:
@@ -119,7 +123,7 @@ def level_up_team_up():
 
 def level_up_gather_items(agent):
     """
-    Uses or to decide if it can't see an item then it roams. 
+    Wrapper for reqs based on level 
     """
     reqs = level_up_reqs(agent.level)    
     gather_items = ct.GEN(lambda x: gather(x, reqs), "level up gather")

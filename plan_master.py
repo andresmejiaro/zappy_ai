@@ -8,7 +8,7 @@ import gen_teaming as gtem
 
 ## 0th plan is to roam
 
-roam_gen = ct.GEN(gmov.roam)
+#roam_gen = ct.GEN(gmov.roam)
 
 ### first plan is to be alive
 

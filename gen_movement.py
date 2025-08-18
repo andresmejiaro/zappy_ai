@@ -15,7 +15,7 @@ def rotate_create(facing:int, rtarget: int)->list[BTNode]:
     facing = facing % 4
     rtarget = rtarget % 4
     
-    c1 = (rtarget - facing)
+    c1 = (rtarget - facing) % 4
     if c1 == 0:
         return []
     if c1 == 1:
