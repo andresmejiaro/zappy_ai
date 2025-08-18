@@ -88,8 +88,7 @@ def move_to(target: np.array, agent:Agent, name: None|str = None) -> BTNode:
             plan = yoption + movesy + rotate_create(yfacing,xfacing) + movesx
         
         
-        return ct.AND(plan, "move to plan")
-
+        return ct.AND(plan, f"move to plan for target {target}")
 
 
 # def distace_matrix(self, agent: Agent)

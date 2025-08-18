@@ -25,6 +25,7 @@ class Party():
         self.incantation_failed = False
         self.dead_member = False
         self.party_join_timeout = -10**9 #New
+        self.pre_incantation_ts = -10**9
 
     def set_party_size(self,lv):
         ps =[1,2,2,4,4,6,6,1]
@@ -73,7 +74,7 @@ class Party():
             return
         remote_name =message_dict.get("party_name")
         if self.party_name is not None:
-            if remote_name < self.party_name:
+            if remote_name <= self.party_name:
                 return
             else:
                 self.reset_party()
@@ -91,7 +92,7 @@ class Party():
             return 
         if self.party_closed:
             return
-        if message_dict.get("name") not in self.party_members and len(self.party_members) < self.party_size:
+        if message_dict.get("name") not in self.party_members:
           self.party_members.append(message_dict.get("name"))
         if len(self.party_members) >= self.party_size:
             while len(self.party_members) > self.party_size:

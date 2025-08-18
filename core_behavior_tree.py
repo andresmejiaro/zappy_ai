@@ -376,7 +376,7 @@ class Interaction(BTNode):
             self.started = True
             self._last_return = Status.O
             with open(f"logs/highlight_{object.name}.jsonl", "a") as f:
-                f.write(json.dumps({"t": object.turn, "name": object.name, "lvl": object.level, "path": log_seq, "s": "O"}))
+                f.write(json.dumps({"t": object.turn, "name": object.name, "lvl": object.level, "path": log_seq, "s": "O"}) + "\n")
                 f.flush()
             return Status.O
         else:

@@ -83,6 +83,7 @@ def gather(agent,resources: dict, individual = False)->ct.BTNode:
     gather_node = ct.ALWAYS_F(ct.GEN(lambda x: pick_up_multiple(x,resources), name = "gather collector"))
     roam = ct.ALWAYS_F(ct.GEN(gmov.roam, name="gather roam"),
                        name = "roam fallback that can't suceed")
+    print(f"gather: {resources} inventory:{inv}")
     return ct.OR([check,gather_node,roam], name = f"gather: {resources} inventory:{inv}")
 
 def level_up_reqs(aclv):
@@ -105,8 +106,9 @@ def level_up_fail_conditions():
      
     incantation_ko = ct.LOGIC(lambda x: not x.party.incantation_failed, "level up failed: incantation failed")
     dead_party_member = ct.LOGIC(lambda x: not x.party.dead_member, "anyone died?")
-
-    checker_list = ct.AND([incantation_ko, dead_party_member],"level_up_fail_conditions main node")
+    too_long_to_lvl_up = ct.LOGIC(lambda x: x.turn - x.party.party_join_timeout < 2500)
+    too_long_to_put_stuff_down = ct.LOGIC(lambda x: x.turn - x.party.pre_incantation_ts < 70)
+    checker_list = ct.AND([incantation_ko, dead_party_member, too_long_to_lvl_up],"level_up_fail_conditions main node")
 
     return checker_list
 
@@ -150,7 +152,8 @@ def level_up_incantation(agent):
     am_i_lone_wolf = ct.LOGIC(lambda x: x.level <= 1, name = "am_i_lone_wolf")
     reqs = level_up_reqs(agent.level)
     drop_items = ct.GEN(lambda x: drop(x,reqs), name= "level up drop")
-    check_party_before_level_up = ct.OR([ct.AND([am_i_lone_wolf,drop_items],"check party before lvl up Selector AND"),
+    flag = ct.LOGIC(lambda x: (setattr(x.party,"pre_incantation_ts" , x.turn), True)[1])    
+    check_party_before_level_up = ct.OR([ct.AND_P([am_i_lone_wolf,drop_items,flag],"check party before lvl up Selector AND"),
                                          check_quorum(agent)], "check party before lvl up Selector OR")     
     incantation = gen_interaction("incantation")
     return ct.AND_P([check_party_before_level_up,incantation], name = "Drop and Incantate, level up incantation master node")

@@ -83,7 +83,10 @@ class Agent():
             for key, value in substances_chances.items():
                 nplayers = max(1, len(self.ppl_timeouts))
                 nobj = value*self.size[0]*self.size[1]
-                breaks = -(self.objects_countdown - self.turn) > 0.25*needs[key]*np.log(0.5)/np.log(1-nplayers/nobj) ## assuming independance of picking up for each player random 0.25 for moving this from the edge case to the ez case
+                if nplayers < nobj:
+                    breaks = -(self.objects_countdown - self.turn) > 0.25*needs[key]*np.log(0.5)/np.log(1-nplayers/nobj) ## assuming independance of picking up for each player random 0.25 for moving this from the edge case to the ez case
+                else:
+                    breaks = -(self.objects_countdown - self.turn) > 300000 # big value
                 for x in range(self.size[0]):
                     for y in range(self.size[1]):
                         if breaks[x,y]:
@@ -336,7 +339,7 @@ class Agent():
                     for w in range(-(self.level + 1),self.level + 1):
                         x1 = (x + z) % self.size[0]
                         y1 = (y + w) % self.size[1]
-                        mask[x,y] += 1/(1 + np.abs(z) + np.abs(w))*(1- np.exp(-0.015*(self.turn - self.objects_countdown[x1,y1])))
+                        mask[x,y] += (1/(1 + np.abs(z) + np.abs(w)))*(1- np.exp(-0.015*(self.turn - self.objects_countdown[x1,y1])))
         return mask
     
     def distance_matrix(self) -> np.ndarray:
