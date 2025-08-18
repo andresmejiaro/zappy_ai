@@ -81,10 +81,9 @@ def gather(agent,resources: dict, individual = False)->ct.BTNode:
     inv = inventory_selector(agent, individual)
     check = ct.LOGIC(lambda x: do_i_have_inventory(x,resources, individual), name = "gather check Inv")
     gather_node = ct.ALWAYS_F(ct.GEN(lambda x: pick_up_multiple(x,resources), name = "gather collector"))
-    roam = ct.ALWAYS_F(ct.GEN(gmov.roam, name="gather roam"),
-                       name = "roam fallback that can't suceed")
+  
     print(f"gather: {resources} inventory:{inv}")
-    return ct.OR([check,gather_node,roam], name = f"gather: {resources} inventory:{inv}")
+    return ct.OR([check,gather_node], name = f"gather: {resources} inventory:{inv}")
 
 def level_up_reqs(aclv):
     lreq =[{"linemate":1}, #1->2
@@ -123,10 +122,7 @@ def level_up_gather_items(agent):
     Uses or to decide if it can't see an item then it roams. 
     """
     reqs = level_up_reqs(agent.level)    
-    gather_items = ct.OR(
-        [ct.GEN(lambda x: gather(x, reqs), "level up gather"),
-         ct.ALWAYS_F(ct.GEN(gmov.roam, name = "level up gathering roam"),
-                     name = "guard so only first cond can say this is done, level up gather master node")])
+    gather_items = ct.GEN(lambda x: gather(x, reqs), "level up gather")
     return gather_items
 
 def level_up_meetup():

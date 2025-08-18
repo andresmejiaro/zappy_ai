@@ -33,7 +33,7 @@ hungry_party = ct.AND([
 
 
 find_food_vector = [ ct.OR([hungry_party , hunger_not_party],"conditions to find food"), 
-                     ct.ALWAYS_F(ct.OR([ct.GEN(lambda x: ggat.pick_up(x,"nourriture"),"pick up food generator"),ct.GEN(gmov.roam)]))]
+                     ct.ALWAYS_F(ct.OR([ct.GEN(lambda x: ggat.pick_up(x,"nourriture"),"pick up food generator")]))]
 
 find_food = ct.AND(find_food_vector, name = "find_food")
 
