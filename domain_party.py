@@ -24,8 +24,8 @@ class Party():
         self.marco_polo_target = None
         self.incantation_failed = False
         self.dead_member = False
-        self.party_join_timeout = -10**9 #New
-        self.pre_incantation_ts = -10**9
+        self.party_join_timeout = 10**9 #New
+        self.pre_incantation_ts = 10**9
 
     def set_party_size(self,lv):
         ps =[1,2,2,4,4,6,6,1]

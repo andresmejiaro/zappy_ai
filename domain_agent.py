@@ -31,7 +31,7 @@ class Agent():
         self.last_turn = -1 #for control of timeouts last seen turn
         self.name = id(self) #give yourself a name
         self.party = Party(self) #reset info about teams
-        self.ppl_timeouts = {self.name:0} #store when last ppl
+        self.ppl_timeouts = {self.name:0} #store<function level_up_fail_conditions.<locals>.<lambda> at 0x79a8eb670720> when last ppl
         self.ppl_lv = {self.name:1} #agents 
 
 
