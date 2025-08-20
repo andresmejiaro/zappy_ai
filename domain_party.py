@@ -38,7 +38,8 @@ class Party():
             "inventory": self.bc_inventory_processer, #generated
             "closed": self.bc_closed_party, #generated
             "disband": self.bc_disband, #generated
-            "ready": self.bc_incantation_ready #generated
+            "ready": self.bc_incantation_ready, #generated
+            "egg": self.bc_egg_processer
          }
 
         try:
@@ -110,6 +111,13 @@ class Party():
             return
         inventory = message_dict.get("inventory")
         self.party_inventories[member] = inventory.copy()
+
+
+    def bc_egg_processer(self, message_dict,direction):
+        """
+        """
+        self.agent.eggs = message_dict.get("egg_count")
+ 
 
     def bc_incantation_ready(self, message_dict, direction):
         """

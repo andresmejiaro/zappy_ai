@@ -37,7 +37,7 @@ def closed_party_gen(x):
     x.alive_processer(json.dumps(message))
     return gen_interaction("broadcast",json.dumps(message))
 
-def disband(x):
+def disband(x, reason = ""):
     ret = 1
     if x.party.party_name is None:
         ret = 0
@@ -45,6 +45,7 @@ def disband(x):
     message["kind"] = "disband"
     message["lvl"] = x.level
     message["party_name"] = x.party.party_name
+    message["reason"] = reason
     x.party.reset_party()
     if ret == 0:
         return ct.LOGIC(lambda x: True, "True")
@@ -74,6 +75,28 @@ def ready_for_incantation(x):
     
     return gen_interaction("broadcast",json.dumps(message))
 
+def ready_for_incantation(x):
+    message = {}
+    message["kind"] = "ready"
+    message["lvl"] = x.level
+    message["party_name"] = x.party.party_name
+    message["name"] = x.name
+    if x.name not in x.party.party_members_ready: 
+        x.party.party_members_ready.append(x.name)
+    
+    return gen_interaction("broadcast",json.dumps(message))
+
+def laid_an_egg(x):
+    message = {}
+    message["kind"] = "egg"
+    message["lvl"] = x.level
+    message["name"] = x.name
+    x.eggs += 1
+    message["egg_count"] = x.eggs
+
+    
+    return gen_interaction("broadcast",json.dumps(message))
+
 
 am_i_leader = ct.LOGIC(lambda x: x.party.party_name is None or (x.party.party_role == 3 and len(x.party.party_members)< x.party.party_size),name = "am_i_leader logic")
 is_party_not_closed_can_close = ct.LOGIC(lambda x: not x.party.party_closed and x.party.party_role == 3 and len(x.party.party_members) >= x.party.party_size , name = "is_party_not_closed_can_close")
@@ -89,7 +112,7 @@ step1 = ct.AND([am_i_leader,ct.GEN(lfg_gen, name = "lfg generator"),
 step2 = ct.AND([is_party_not_closed_can_close,ct.GEN(closed_party_gen, name = "closed party generator"),
                  ct.LOGIC(lambda x:False, "False")], name = "close party condition ok")
 
-stale_check = ct.OR([ ct.LOGIC(lambda x: x.turn - x.party.party_join_timeout < 50),
+stale_check = ct.OR([ ct.LOGIC(lambda x: x.turn - x.party.party_join_timeout < 30),
                      ct.LOGIC(lambda x: (x.party.reset_party(),False)[1])
 ],"stale join party checks")
 

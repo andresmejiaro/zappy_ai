@@ -4,7 +4,7 @@ import gen_gathering as ggat
 from gen_common import gen_interaction
 import numpy as np
 import gen_teaming as gtem
-
+import random 
 
 ## 0th plan is to roam
 
@@ -12,28 +12,30 @@ import gen_teaming as gtem
 
 ### first plan is to be alive
 
+very_hungry_will_drop_anything = 10
+tank_full = 40
+prefer_food_over_lvup_if_not_party = 16
 
-open_cond= lambda x: x.inventory["nourriture"] < 10 and x.party.party_name is None
-close_cond = lambda x: x.inventory["nourriture"] > 15
+open_cond= lambda x: x.inventory["nourriture"] < prefer_food_over_lvup_if_not_party and x.party.party_name is None
+close_cond = lambda x: x.inventory["nourriture"] > tank_full
 hunger_not_party = ct.GATE(open_cond= open_cond,close_cond=close_cond, name="open hunger")
 
 
-open_cond= lambda x: x.inventory["nourriture"] < 5 and x.party.party_name is not None and x.party.party_role >= 2
-close_cond = lambda x: x.inventory["nourriture"] > 15
+open_cond= lambda x: x.inventory["nourriture"] < very_hungry_will_drop_anything  and x.party.party_name is not None and x.party.party_role >= 2
+close_cond = lambda x: x.inventory["nourriture"] > tank_full
 hunger_party = ct.GATE(open_cond= open_cond,close_cond=close_cond, name="open hunger")
 
 
 hungry_party = ct.AND([
         hunger_party,
-        ct.GEN(gtem.disband),
+        ct.GEN(lambda x: gtem.disband(x, reason = "I am hungry")),
 ])
 
 
 
 
-
 find_food_vector = [ ct.OR([hungry_party , hunger_not_party],"conditions to find food"), 
-                     ct.ALWAYS_F(ct.OR([ct.GEN(lambda x: ggat.pick_up(x,"nourriture"),"pick up food generator")]))]
+                     (ct.OR([ct.GEN(lambda x: ggat.pick_up(x,"nourriture"),"pick up food generator")]))]
 
 find_food = ct.AND(find_food_vector, name = "find_food")
 
@@ -54,7 +56,18 @@ am_I_almost_declared_dead = ct.AND([ct.LOGIC(lambda x: x.turn - x.ppl_timeouts.g
 
 
 
+#######
+p_lay_egg = 0.002
+lay_an_egg =ct.GEN(lambda _: ct.AND_P([ct.LOGIC(lambda x: random.random()< p_lay_egg and len(x.ppl_lv)<12 and x.level > 1),
+                    gen_interaction("fork")
+                    ])
+                    )
 
-master_plan = ct.OR([am_I_almost_declared_dead, level_up, ct.ALWAYS_F( gen_interaction("inventaire"), name = "ending inventaire")], name = "master plan")                         
+
+
+
+master_plan = ct.OR([am_I_almost_declared_dead, lay_an_egg, level_up, ct.ALWAYS_F( gen_interaction("inventaire"), name = "ending inventaire")], name = "master plan")                         
+#master_plan = ct.OR([am_I_almost_declared_dead,find_food, lay_an_egg, level_up, ct.ALWAYS_F( gen_interaction("inventaire"), name = "ending inventaire")], name = "master plan")                         
+#master_plan = ct.OR([am_I_almost_declared_dead,find_food, level_up, ct.ALWAYS_F( gen_interaction("inventaire"), name = "ending inventaire")], name = "master plan")                     
 #master_plan = ct.OR([am_I_almost_declared_dead, find_food, level_up, ct.ALWAYS_F( gen_interaction("inventaire"), name = "ending inventaire")], name = "master plan")                         
 #master_plan = ct.ALWAYS_F(ct.OR([ct.GEN(lambda x: ggat.pick_up(x,"nourriture"),"pick up food generator"),ct.GEN(gmov.roam)]))

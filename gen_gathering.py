@@ -109,9 +109,9 @@ def level_up_fail_conditions():
      
     incantation_ko = ct.LOGIC(lambda x: not x.party.incantation_failed, "level up failed: incantation failed")
     dead_party_member = ct.LOGIC(lambda x: not x.party.dead_member, "anyone died?")
-    too_long_to_lvl_up = ct.LOGIC(lambda x: x.turn - x.party.party_join_timeout < 2500)
+    too_long_to_lvl_up = ct.LOGIC(lambda x: x.turn - x.party.party_join_timeout < 15500)
     too_long_to_put_stuff_down = ct.LOGIC(lambda x: x.turn - x.party.pre_incantation_ts < 70)
-    checker_list = ct.AND([incantation_ko, dead_party_member, too_long_to_lvl_up],"level_up_fail_conditions main node")
+    checker_list = ct.AND([incantation_ko, dead_party_member, too_long_to_lvl_up, too_long_to_put_stuff_down],"level_up_fail_conditions main node")
 
     return checker_list
 
@@ -145,8 +145,8 @@ def level_up_meetup():
                             follower_logic], name = "marco polo role selector OR, level up meetup master node")
     return marco_polo
 
-def level_up_cleanup():
-    return ct.GEN(gtem.disband, name ="disbanding level up cleanup level_up_cleanup master")
+def level_up_cleanup(reason = ""):
+    return ct.GEN(lambda x: gtem.disband(x, reason=reason), name ="disbanding level up cleanup level_up_cleanup master")
 
 def level_up_incantation(agent):
     am_i_lone_wolf = ct.LOGIC(lambda x: x.level <= 1, name = "am_i_lone_wolf")
@@ -191,18 +191,31 @@ def level_up(agent):
     level up fail conditions return Status.F if the plan should be regenerated true 
     if it needs to go on.
     """
-    level_up_plan = ct.O_ON_F(ct.AND_P([level_up_team_up(),
+    def randomly_gather(x):
+        req = level_up_reqs(agent.level)
+        one_of_many = ct.ALWAYS_F(ct.GEN(lambda x: pick_up_multiple(x,req), name = "gather collector"), "using pick up to get an item")
+        return ct.AND_P([
+            ct.LOGIC(lambda _: random.random() < 0.65),
+            ct.ALWAYS_F(one_of_many, "guard failing doesn't mean anything in backup")
+            ]) 
+    
+    randomly_gather_node_or_team_up = ct.OR([
+        ct.GEN(randomly_gather),
+       level_up_team_up()], "randomly gather node or team")
+    
+    
+    level_up_plan = ct.O_ON_F(ct.AND_P([randomly_gather_node_or_team_up,
                               level_up_gather_items(agent),
                               level_up_meetup(),
                               level_up_incantation(agent),
-                              level_up_cleanup()
+                              level_up_cleanup(reson = "level up done")
                               ], name= "level up plan"),
                               name = "guard failure means working for true failure see fail conditions")
     
     return ct.OR([
         ct.AND([level_up_fail_conditions() ,
                 level_up_plan], name = "proceed unless hard fail"),
-          level_up_cleanup()
+          level_up_cleanup(reason = "some level up fail condition triggered" )
           ], name = "level up fail fallback, level up master node")
 
 

@@ -32,7 +32,9 @@ class Agent():
         self.name = id(self) #give yourself a name
         self.party = Party(self) #reset info about teams
         self.ppl_timeouts = {self.name:0} #store<function level_up_fail_conditions.<locals>.<lambda> at 0x79a8eb670720> when last ppl
-        self.ppl_lv = {self.name:1} #agents 
+        self.ppl_lv = {self.name:-400} #agents 
+        self.eggs = 0
+        self.hold = False
 
 
     def starting_command(self, command: str):
@@ -47,6 +49,9 @@ class Agent():
         if self.starting == 1:
             if command.isdigit():
                 self.nb_client = int(command)
+                self.eggs = self.nb_client
+                if self.nb_client > 0:
+                    self.hold = True
                 self.starting += 1
                 self.starting_time = time.time()
                 return
@@ -55,6 +60,8 @@ class Agent():
                 print(f"No se identifico el numero de clientes de manera correcta {command}")
         if self.starting == 2:
             coords = command.split(' ')
+            if command == "0":
+                return
             if len(coords) != 2:
                 self.starting = 4
                 print(f"No son dos coordenadas!{coords}")
@@ -164,8 +171,9 @@ class Agent():
         self.turn += 7
         self.resolve_from_running_routine(x)
   
-    def fork_processer(self,command):
-        pass
+    def fork_processer(self,command,x):
+        self.turn += 42
+        self.resolve_from_running_routine(x)
 
     def ok_processer(self, command):
         okaiable_commands = {"avance": self.avance_processer,
@@ -281,6 +289,8 @@ class Agent():
         lvl = message_dict.get("lvl", -1) 
         if who is None:
             return
+        if who not in self.ppl_timeouts:
+            self.eggs -= 1
         self.ppl_timeouts[who] = self.turn
         if lvl != -1:
             self.ppl_lv[who] = lvl

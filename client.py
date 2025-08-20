@@ -1,7 +1,7 @@
 import argparse
 from infra_orchestrator import Orchester
 from domain_agent import Agent
-from plan_master import master_plan
+from master_plan import master_plan
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Zappy Client!!!", add_help=False)
