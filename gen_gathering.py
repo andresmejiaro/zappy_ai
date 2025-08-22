@@ -108,11 +108,11 @@ def level_up_fail_conditions():
     """
      
     incantation_ko = ct.LOGIC(lambda x: not x.party.incantation_failed, "level up failed: incantation failed")
-    dead_party_member = ct.LOGIC(lambda x: not x.party.dead_member, "anyone died?")
-    too_long_to_lvl_up = ct.LOGIC(lambda x: x.turn - x.party.party_join_timeout < 15500)
+    dead_party_member = ct.LOGIC(lambda x: not x.party.dead_member, "anyone died or commited TREASON!!?")
+    #too_long_to_lvl_up = ct.LOGIC(lambda x: x.turn - x.party.party_join_timeout < 15500)
     too_long_to_put_stuff_down = ct.LOGIC(lambda x: x.turn - x.party.pre_incantation_ts < 70)
-    checker_list = ct.AND([incantation_ko, dead_party_member, too_long_to_lvl_up, too_long_to_put_stuff_down],"level_up_fail_conditions main node")
-
+    #checker_list = ct.AND([incantation_ko, dead_party_member, too_long_to_lvl_up, too_long_to_put_stuff_down],"level_up_fail_conditions main node")
+    checker_list = ct.AND([incantation_ko, dead_party_member, too_long_to_put_stuff_down],"level_up_fail_conditions main node")
     return checker_list
 
 
@@ -152,7 +152,7 @@ def level_up_incantation(agent):
     am_i_lone_wolf = ct.LOGIC(lambda x: x.level <= 1, name = "am_i_lone_wolf")
     reqs = level_up_reqs(agent.level)
     drop_items = ct.GEN(lambda x: drop(x,reqs), name= "level up drop")
-    flag = ct.LOGIC(lambda x: (setattr(x.party,"pre_incantation_ts" , x.turn), True)[1])    
+    flag = ct.LOGIC(lambda x: (setattr(x.party,"pre_incantation_ts" , x.turn), True)[1], "set start flag")    
     check_party_before_level_up = ct.OR([ct.AND_P([am_i_lone_wolf,drop_items,flag],"check party before lvl up Selector AND"),
                                          check_quorum(agent)], "check party before lvl up Selector OR")     
     incantation = gen_interaction("incantation")
@@ -174,11 +174,11 @@ def check_quorum(agent):
 
     is_there_enough_ppl = ct.OR([
         ct.LOGIC(lambda l: l.objects[l.pos[0]][l.pos[1]].count("player") >= l.party.party_size - 1, name = "can I see ppl here?"),
-        ct.ALWAYS_F(gen_interaction("voir"), "voir not validates problem")
+        ct.ALWAYS_F(gen_interaction("voir"), f"voir not validate problem: not enough ppl problem")
     ])
     are_the_items_in_the_ground = ct.OR([
         ct.LOGIC(lambda l: item_ground_count(l,l.pos[0],l.pos[1],reqs), "is the stuff on the ground?"),
-        ct.ALWAYS_F(gen_interaction("voir"), "voir not validates problem")
+        ct.ALWAYS_F(gen_interaction("voir"), f"voir not validate problem: not enough stuff")
     ])
 
     return ct.AND_P([is_there_enough_ppl,
@@ -208,7 +208,7 @@ def level_up(agent):
                               level_up_gather_items(agent),
                               level_up_meetup(),
                               level_up_incantation(agent),
-                              level_up_cleanup(reson = "level up done")
+                              level_up_cleanup(reason = "level up done")
                               ], name= "level up plan"),
                               name = "guard failure means working for true failure see fail conditions")
     

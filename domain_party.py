@@ -31,6 +31,15 @@ class Party():
         ps =[1,2,2,4,4,6,6,1]
         return ps[lv-1]
     
+    
+    
+    def loyality_checker(self,message):
+        if not self.party_closed:
+            return
+        if message.get("name") in self.party_members and message.get("party_name") != self.party_name:
+            self.dead_member = True
+    
+    
     def party_message_processer(self, message, direction):
         processers = {
             "lfg": self.bc_lfg_processer,#generated
@@ -41,7 +50,7 @@ class Party():
             "ready": self.bc_incantation_ready, #generated
             "egg": self.bc_egg_processer
          }
-
+        self.loyality_checker(message)
         try:
             message_dict = json.loads(message)
         except Exception as e:
