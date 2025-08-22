@@ -50,7 +50,7 @@ def move_to(target: np.array, agent:Agent, name: None|str = None) -> BTNode:
         targets = list(map(lambda x: x - position, targets))
         displacement = shorstest_vect(targets) 
         if np.linalg.norm(displacement) == 0:
-             return LOGIC(lambda x: True)  
+             return LOGIC(lambda x: True, "already at target")
         
                        
         ### movement in x
@@ -204,7 +204,10 @@ def marco_polo_follower(agent: Agent):
     scream = ct.GEN(gtem.ready_for_incantation, name = "scream I arrived")
     step3 = ct.ALWAYS_F(move, "move Success does not mean we are there")
     step2 = ct.OR([ct.AND([am_i_there,scream], "if we are there scream"), step3], "if we are not there move ")
-    step1 = ct.OR([ct.AND([do_i_have_direction,step2]),ct.ALWAYS_F(gen_interaction("inventaire"), "fallback marco polo step")],name = "Marco follower main node")
+    step1 = ct.OR([
+        ct.AND([do_i_have_direction,step2], name="have direction then move"),
+        ct.ALWAYS_F(gen_interaction("inventaire"), "fallback marco polo step")
+    ],name = "Marco follower main node")
 
     
     return step1

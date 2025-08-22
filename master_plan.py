@@ -28,14 +28,14 @@ hunger_party = ct.GATE(open_cond= open_cond,close_cond=close_cond, name="open hu
 
 hungry_party = ct.AND([
         hunger_party,
-        ct.GEN(lambda x: gtem.disband(x, reason = "I am hungry")),
-])
+        ct.GEN(lambda x: gtem.disband(x, reason = "I am hungry"), name="hungry disband generator"),
+], name="hungry party disband")
 
 
 
 
-find_food_vector = [ ct.OR([hungry_party , hunger_not_party],"conditions to find food"), 
-                     (ct.OR([ct.GEN(lambda x: ggat.pick_up(x,"nourriture"),"pick up food generator")]))]
+find_food_vector = [ ct.OR([hungry_party , hunger_not_party],"conditions to find food"),
+                     (ct.OR([ct.GEN(lambda x: ggat.pick_up(x,"nourriture"),"pick up food generator")], name="single pick up food"))]
 
 find_food = ct.AND(find_food_vector, name = "find_food")
 
@@ -51,17 +51,21 @@ level_up = ct.GEN(lambda x: ggat.level_up(x), name = "level up main", reset_on_f
 #gooble = ct.AND([ct.LOGIC(lambda x: np.array_equal(ggat.closest_resource(x,"nourriture"),x.pos ) ), gen_interaction("prend", "nourriture") ], name = "oportunistic food")
 
 am_I_almost_declared_dead = ct.AND([ct.LOGIC(lambda x: x.turn - x.ppl_timeouts.get(x.name,x.turn)  >= 350, "am I missing?"),
-                                    ct.GEN(gtem.share_inventory)
-                                    ])
+                                    ct.GEN(gtem.share_inventory, name="share inventory generator")
+                                    ], name="am I almost declared dead")
 
 
 
 #######
 p_lay_egg = 0.002
-lay_an_egg =ct.GEN(lambda _: ct.AND_P([ct.LOGIC(lambda x: random.random()< p_lay_egg and len(x.ppl_lv)<12 and x.level > 1),
-                    gen_interaction("fork")
-                    ])
-                    )
+lay_an_egg = ct.GEN(
+    lambda _: ct.AND_P([
+        ct.LOGIC(lambda x: random.random() < p_lay_egg and len(x.ppl_lv) < 12 and x.level > 1,
+                  "should lay egg"),
+        gen_interaction("fork")
+    ], name="lay egg sequence"),
+    name="lay an egg generator"
+)
 
 
 
