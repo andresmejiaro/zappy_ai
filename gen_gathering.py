@@ -26,7 +26,7 @@ def drop(agent: Agent,inventory: dict) -> ct.BTNode:
     if len(actions) > 0:
         to_return = ct.AND_P(actions, name=f"drop {inventory}" )
         return to_return
-    return ct.LOGIC(lambda x: True, "True")
+    return ct.LOGIC(lambda x: True, "nothing to drop")
 
 def closest_resource(agent: Agent, resource: str):
     """
@@ -45,12 +45,13 @@ def pick_up(agent: Agent, resource: str) -> ct.BTNode:
     def pick_up_plan(agent):
         x = closest_resource(agent, resource)
         if x is None or len(x) == 0:
-            return ct.LOGIC(lambda x: False)
+            return ct.LOGIC(lambda x: False, name="resource not found")
         actions = move_to(x, agent)
         actions = [actions, ct.Interaction("prend",resource), ct.Interaction("inventaire")]
         return ct.AND(actions, name = f"pick up {resource}")  
-    return  ct.OR([ct.GEN(pick_up_plan), 
-                   ct.ALWAYS_F(ct.GEN(gmov.roam))])
+    return  ct.OR([ct.GEN(pick_up_plan, name="pick up plan generator"),
+                   ct.ALWAYS_F(ct.GEN(gmov.roam, name="roam generator"), name="fallback roam")],
+                  name="pick up or roam")
  
 
 
@@ -68,7 +69,7 @@ def pick_up_multiple(agent, resources: dict, individual = False)->ct.BTNode:
     w = map(lambda x: ct.GEN(lambda y: pick_up(y, x), name = f"pick_up call on {x}"), look4)
     w = list(w)
     if len(w) == 0:
-        return ct.LOGIC(lambda x: True, "True")
+        return ct.LOGIC(lambda x: True, "resources already gathered")
     z = ct.OR(w, name="pick_up_multiple")
     if agent.party.party_name is None:
         return z
@@ -84,7 +85,8 @@ def do_i_have_inventory(agent, resources: dict, individual = False)->bool:
 def gather(agent,resources: dict, individual = False)->ct.BTNode:
     inv = inventory_selector(agent, individual)
     check = ct.LOGIC(lambda x: do_i_have_inventory(x,resources, individual), name = "gather check Inv")
-    gather_node = ct.ALWAYS_F(ct.GEN(lambda x: pick_up_multiple(x,resources), name = "gather collector"))
+    gather_node = ct.ALWAYS_F(ct.GEN(lambda x: pick_up_multiple(x,resources), name = "gather collector"),
+                               name="gather until inventory met")
   
     print(f"gather: {resources} inventory:{inv}")
     return ct.OR([check,gather_node], name = f"gather: {resources} inventory:{inv}")
@@ -175,11 +177,11 @@ def check_quorum(agent):
     is_there_enough_ppl = ct.OR([
         ct.LOGIC(lambda l: l.objects[l.pos[0]][l.pos[1]].count("player") >= l.party.party_size - 1, name = "can I see ppl here?"),
         ct.ALWAYS_F(gen_interaction("voir"), f"voir not validate problem: not enough ppl problem")
-    ])
+    ], name="check enough people")
     are_the_items_in_the_ground = ct.OR([
         ct.LOGIC(lambda l: item_ground_count(l,l.pos[0],l.pos[1],reqs), "is the stuff on the ground?"),
         ct.ALWAYS_F(gen_interaction("voir"), f"voir not validate problem: not enough stuff")
-    ])
+    ], name="check items on ground")
 
     return ct.AND_P([is_there_enough_ppl,
               drop_items,
@@ -195,12 +197,12 @@ def level_up(agent):
         req = level_up_reqs(agent.level)
         one_of_many = ct.ALWAYS_F(ct.GEN(lambda x: pick_up_multiple(x,req), name = "gather collector"), "using pick up to get an item")
         return ct.AND_P([
-            ct.LOGIC(lambda _: random.random() < 0.65),
+            ct.LOGIC(lambda _: random.random() < 0.65, name="random gather chance"),
             ct.ALWAYS_F(one_of_many, "guard failing doesn't mean anything in backup")
-            ]) 
+            ], name="random gather attempt")
     
     randomly_gather_node_or_team_up = ct.OR([
-        ct.GEN(randomly_gather),
+        ct.GEN(randomly_gather, name="randomly gather generator"),
        level_up_team_up()], "randomly gather node or team")
     
     
