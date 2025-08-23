@@ -2,7 +2,6 @@ import time
 import random
 import numpy as np
 import json
-from domain_party import Party
 
 
 random.seed(42)
@@ -30,11 +29,10 @@ class Agent():
         self.objects_countdown = None #timeouts of seen parts of the map, forgets
         self.last_turn = -1 #for control of timeouts last seen turn
         self.name = id(self) #give yourself a name
-        self.party = Party(self) #reset info about teams
         self.ppl_timeouts = {self.name:0} #store<function level_up_fail_conditions.<locals>.<lambda> at 0x79a8eb670720> when last ppl
         self.ppl_lv = {self.name:-400} #agents 
-        self.eggs = 0
-        self.hold = False
+        self.ppl_inventories = {}
+        self.level_reset()
 
 
     def starting_command(self, command: str):
@@ -49,7 +47,6 @@ class Agent():
         if self.starting == 1:
             if command.isdigit():
                 self.nb_client = int(command)
-                self.eggs = self.nb_client
                 if self.nb_client > 0:
                     self.hold = True
                 self.starting += 1
@@ -74,6 +71,10 @@ class Agent():
                 self.objects = [[[] for y in range(self.size[1])] for x in range(self.size[0])]
                 self.objects_countdown = np.zeros(self.size) 
                 self.starting += 1
+
+    def set_party_size(self,lv):
+        ps =[1,2,2,4,4,6,6,1]
+        return ps[lv-1]
 
     def objects_cooldown(self): 
         if self.objects_countdown is not None:
@@ -103,11 +104,30 @@ class Agent():
         diff = {key:value  - self.turn for key, value in self.ppl_timeouts.items() if self.turn - value  > 400}
         if len(diff) > 0:
             for key in diff.keys():
-                if key in self.party.party_members:
-                    self.party.dead_member = True
                 self.ppl_timeouts.pop(key, None)
                 self.ppl_lv.pop(key,None)
 
+
+    def update_level_inventory(self):
+        self.level_inventory = {}
+        for thing in self.inventory.keys():
+            self.level_inventory[thing] = 0
+            for person, level in self.ppl_lv.items():
+                if level != self.level:
+                    continue
+                if person in self.ppl_inventories:
+                    self.level_inventory[thing] += self.ppl_inventories[person].get(thing,0) 
+
+    def update_ready_inventory(self):
+        self.ready_inventory = {}
+        for thing in self.inventory.keys():
+            self.ready_inventory[thing] = 0
+            for person, level in self.ppl_lv.items():
+                if level != self.level:
+                    continue
+                if person in self.ppl_inventories:
+                    self.ready_inventory[thing] += self.ppl_inventories[person].get(thing,0) 
+        return self.ready_inventory
     
     def food_update(self):
         #update 
@@ -207,7 +227,6 @@ class Agent():
 
     def incantation_ko(self, command,x,status = "ko"):
         self.turn += 300
-        self.party.incantation_failed = True
         self.resolve_from_running_routine("incantation","ko")
         
     def elevation_en_cours_processer(self,command):
@@ -263,10 +282,18 @@ class Agent():
         if x[0] == "inventaire":
             self.inventaire_processer(command)
 
+    def level_reset(self):
+        self.sound_direction = None
+        self.marco_polo_target = None
+        self.whos_ready = []
+        self.level_inventory = {}
+        self.ready_inventory = {}
+        self.timeout = None
 
     def niveau_actuel_processer(self,command):
         levels = command.split(":")
         self.level = int(levels[1])
+        self.level_reset()
         self.turn += 300
         self.resolve_from_running_routine("incantation")
 
@@ -275,7 +302,7 @@ class Agent():
         split_command1 = command.split(",",maxsplit = 1)
         direction = int(split_command1[0].split()[1])
         message = split_command1[1]
-        self.party.party_message_processer(message, direction)
+        self.party_message_processer(message, direction)
         self.alive_processer(message) #new
 
 
@@ -289,8 +316,6 @@ class Agent():
         lvl = message_dict.get("lvl", -1) 
         if who is None:
             return
-        if who not in self.ppl_timeouts:
-            self.eggs -= 1
         self.ppl_timeouts[who] = self.turn
         if lvl != -1:
             self.ppl_lv[who] = lvl
@@ -333,7 +358,7 @@ class Agent():
         else:
             return ""
         
-    def sound_direction(self,direction: int):
+    def sound_directionf(self,direction: int):
         if direction != 0:
             newdir = (2*self.facing + direction -1) % 8
             return SOUND_DIRECTIONS[newdir]
@@ -360,4 +385,45 @@ class Agent():
         dx = np.minimum(dx, W - dx)
         dy = np.minimum(dy, H - dy)
         return (dx + dy).astype(int)
+    
+    def party_message_processer(self, message, direction):
+        processers = {
+            "inventory": self.bc_inventory_processer, #generated
+            "ready": self.bc_incantation_ready, #generated
+         }
+        try:
+            message_dict = json.loads(message)
+        except Exception as e:
+            print(f"Could not decript message {e}")
+            return
+        kind = message_dict.get("kind")
+        if kind is not None and kind in processers.keys():
+            processers[kind](message_dict, direction)
+            return
+        print("Recieved random broadcast")
+
+
+    def bc_incantation_ready(self, message_dict, direction):
+        """
+        """
+        level = message_dict.get("lvl")
+        if level != self.level:
+            return
+        name = message_dict.get("name")
+        if name not in self.whos_ready:
+            self.whos_ready.append(name)        
+        self.sound_direction = direction
+        self.pos_at_sound = self.pos.copy()
+        if direction == 0:
+            self.marco_polo_target = self.pos
+
+    def bc_inventory_processer(self, message_dict,direction):
+        """
+        tested
+        generator written
+        """
+        member = message_dict.get("name")
+        inventory = message_dict.get("inventory")
+        self.ppl_inventories[member] = inventory.copy()
+
 

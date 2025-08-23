@@ -259,7 +259,7 @@ class GEN(BTNode):
     and returns a BTNode object
             
     """
-    def __init__(self, generator:Callable[[Any], BTNode], name: str|None = None, reset_on_failure = True, reset_on_success = True, timeout = 1000000):
+    def __init__(self, generator:Callable[[Any], BTNode], name: str|None = None, reset_on_failure = True, reset_on_success = True, timeout = 1000000, timeout_callback = None):
         super().__init__(name)
         self.generator = generator
         self.plan = None
@@ -270,6 +270,7 @@ class GEN(BTNode):
         self.last_timeout = 0
         self.last_log = ""
         self.init_count = 0
+        self.timeout_callback = timeout_callback
     
     def run(self, object, log_seq = []):
         log_seq = log_seq.copy() + [self.name]
@@ -286,6 +287,8 @@ class GEN(BTNode):
         if  reset_S or reset_F:
             self.last_log = self.plan.log()
             self.plan = None
+            if self.timeout_callback is not None:
+                self.timeout_callback(object)
         if self.timeout > 0:
             if object.turn - self.last_timeout > self.timeout:
                 self.plan = None

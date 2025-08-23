@@ -7,13 +7,16 @@ import numpy as np
 import random
 import gen_teaming as gtem
 
-def inventory_selector(agent, indivudual = False)->dict:
+def inventory_selector(agent, indivudual = None)->dict:
     #what inventory to use
-    if agent.party.party_closed == True and not indivudual:
-        agent.party.update_party_inventory()
-        inv = agent.party.party_inventory
+    if indivudual is not None and agent.level >= 2:
+        agent.update_level_inventory()
+        inv = agent.level_inventory
+    elif indivudual == "ready":
+        inv = agent.update_ready_inventory()
     else:
         inv = agent.inventory
+    
     return inv
 
 
@@ -51,8 +54,6 @@ def pick_up(agent: Agent, resource: str) -> ct.BTNode:
         return ct.AND(actions, name = f"pick up {resource}")  
     return  ct.OR([ct.GEN(pick_up_plan), 
                    ct.ALWAYS_F(ct.GEN(gmov.roam))])
- 
-
 
 def pick_up_multiple(agent, resources: dict, individual = False)->ct.BTNode:
     """
@@ -70,11 +71,9 @@ def pick_up_multiple(agent, resources: dict, individual = False)->ct.BTNode:
     if len(w) == 0:
         return ct.LOGIC(lambda x: True, "True")
     z = ct.OR(w, name="pick_up_multiple")
-    if agent.party.party_name is None:
-        return z
     return ct.AND_P([z, ct.GEN(gtem.share_inventory, "share inventory generator pick up multiple")], name = f"pick up multiple main node inv:{inv}")
 
-def do_i_have_inventory(agent, resources: dict, individual = False)->bool:
+def do_i_have_inventory(agent, resources: dict, individual = None)->bool:
     inv = inventory_selector(agent, individual)
     for key, value in resources.items():
         if inv.get(key,0) < value:
@@ -96,37 +95,18 @@ def level_up_reqs(aclv):
            {"linemate":1, "deraumere":1,"sibur":2,"phiras":1},#4->5
            {"linemate":1, "deraumere":2,"sibur":1,"mendiane":3}, #5->6
            {"linemate":1, "deraumere":2,"sibur":3,"phiras":1}, # 6->7
-           {"linemate":2, "deraumere":2,"sibur":2, "mendiane":2,"phiras":2,"thystame":1} #7->8
+           {"linemate":2, "deraumere":2,"sibur":2, "mendiane":2,"phiras":2,"thystame":1}, #7->8,
+           {} # 8->9 to avoid crash at endgame
+        
     ]
     return lreq[aclv - 1]
-
-
-
-def level_up_fail_conditions():
-    """
-    WIP
-    """
-     
-    incantation_ko = ct.LOGIC(lambda x: not x.party.incantation_failed, "level up failed: incantation failed")
-    dead_party_member = ct.LOGIC(lambda x: not x.party.dead_member, "anyone died or commited TREASON!!?")
-    #too_long_to_lvl_up = ct.LOGIC(lambda x: x.turn - x.party.party_join_timeout < 15500)
-    too_long_to_put_stuff_down = ct.LOGIC(lambda x: x.turn - x.party.pre_incantation_ts < 70)
-    #checker_list = ct.AND([incantation_ko, dead_party_member, too_long_to_lvl_up, too_long_to_put_stuff_down],"level_up_fail_conditions main node")
-    checker_list = ct.AND([incantation_ko, dead_party_member, too_long_to_put_stuff_down],"level_up_fail_conditions main node")
-    return checker_list
-
-
-def level_up_team_up():
-    am_i_lone_wolf = ct.LOGIC(lambda x: x.level <= 1, name = "am_i_lone_wolf")
-    team_up = ct.OR([am_i_lone_wolf, gtem.teaming], name = "level up team up master node")
-    return team_up
 
 def level_up_gather_items(agent):
     """
     Wrapper for reqs based on level 
     """
     reqs = level_up_reqs(agent.level)    
-    gather_items = ct.GEN(lambda x: gather(x, reqs), "level up gather")
+    gather_items =ct.O_ON_F( ct.GEN(lambda x: gather(x, reqs), "level up gather"), "F means gathering")
     return gather_items
 
 def level_up_meetup():
@@ -135,29 +115,43 @@ def level_up_meetup():
     don't do this, screamer the one they will get to, and follower the one who will get 
     there. The logic on how to do that is on the generators
     """
+    def am_I_screamer_helper(agent: Agent):
+        for key, value in agent.ppl_lv.items():
+            if key > agent.name and value == agent.level:
+                return False
+        return True
+    
+    
+
+
+
     am_i_lone_wolf = ct.LOGIC(lambda x: x.level <= 1, name = "am_i_lone_wolf")
-    am_i_party_leader = ct.LOGIC(lambda x: x.party.party_role == 3, name = "am I the party Leader")
+    am_i_screamer = ct.LOGIC(am_I_screamer_helper, name = "am I the party Leader")
     
     screamer_logic = ct.O_ON_F(ct.GEN(gmov.marco_polo_screamer, name = "generating screaming logic"), name = "don't fail just try again")
     follower_logic = ct.O_ON_F(ct.GEN(gmov.marco_polo_follower,reset_on_failure=False, name = "generating follower logic"), name = "don't fail just try again")
     marco_polo = ct.OR([am_i_lone_wolf,
-                            ct.AND([am_i_party_leader, screamer_logic], name = "marco polo_role selector AND"), 
+                            ct.AND([am_i_screamer, screamer_logic], name = "marco polo_role selector AND"), 
                             follower_logic], name = "marco polo role selector OR, level up meetup master node")
+   
+
     return marco_polo
 
-def level_up_cleanup(reason = ""):
-    return ct.GEN(lambda x: gtem.disband(x, reason=reason), name ="disbanding level up cleanup level_up_cleanup master")
 
 def level_up_incantation(agent):
     am_i_lone_wolf = ct.LOGIC(lambda x: x.level <= 1, name = "am_i_lone_wolf")
     reqs = level_up_reqs(agent.level)
     drop_items = ct.GEN(lambda x: drop(x,reqs), name= "level up drop")
-    flag = ct.LOGIC(lambda x: (setattr(x.party,"pre_incantation_ts" , x.turn), True)[1], "set start flag")    
-    check_party_before_level_up = ct.OR([ct.AND_P([am_i_lone_wolf,drop_items,flag],"check party before lvl up Selector AND"),
+    check_party_before_level_up = ct.OR([ct.AND_P([am_i_lone_wolf,drop_items],"check party before lvl up Selector AND"),
                                          check_quorum(agent)], "check party before lvl up Selector OR")     
     incantation = gen_interaction("incantation")
-    return ct.AND_P([check_party_before_level_up,incantation], name = "Drop and Incantate, level up incantation master node")
-    
+    incantation_logic = ct.AND_P([check_party_before_level_up,incantation], name = "Drop and Incantate, level up incantation master node")
+    set_timeout = ct.LOGIC( lambda x: (setattr(x,"timeout",x.turn),True)[1], "timeout for incantation")
+    il2 = ct.O_ON_F(ct.AND_P([set_timeout, incantation_logic], "timeout lead to incantation logic"), "so only to makes it fail")
+    fail = ct.LOGIC(lambda x: (x.level_reset(), False)[1],"reset parameters at fail")
+
+    return ct.OR([ct.AND([ct.LOGIC(lambda x: x.timeout is None or x.turn - x.timeout <150, "gate"), il2],"and il2"),fail], "level up incantation main node")
+
 
 def item_ground_count(agent,x,y,reqs:dict)->bool:
     for key, value in reqs.items():
@@ -173,7 +167,7 @@ def check_quorum(agent):
  
 
     is_there_enough_ppl = ct.OR([
-        ct.LOGIC(lambda l: l.objects[l.pos[0]][l.pos[1]].count("player") >= l.party.party_size - 1, name = "can I see ppl here?"),
+        ct.LOGIC(lambda l: l.objects[l.pos[0]][l.pos[1]].count("player") >= l.set_party_size(l.level) - 1, name = "can I see ppl here?"),
         ct.ALWAYS_F(gen_interaction("voir"), f"voir not validate problem: not enough ppl problem")
     ])
     are_the_items_in_the_ground = ct.OR([
@@ -188,34 +182,17 @@ def check_quorum(agent):
 
 def level_up(agent):
     """
-    level up fail conditions return Status.F if the plan should be regenerated true 
-    if it needs to go on.
-    """
-    def randomly_gather(x):
-        req = level_up_reqs(agent.level)
-        one_of_many = ct.ALWAYS_F(ct.GEN(lambda x: pick_up_multiple(x,req), name = "gather collector"), "using pick up to get an item")
-        return ct.AND_P([
-            ct.LOGIC(lambda _: random.random() < 0.65),
-            ct.ALWAYS_F(one_of_many, "guard failing doesn't mean anything in backup")
-            ]) 
     
-    randomly_gather_node_or_team_up = ct.OR([
-        ct.GEN(randomly_gather),
-       level_up_team_up()], "randomly gather node or team")
+    """ 
+  
     
     
-    level_up_plan = ct.O_ON_F(ct.AND_P([randomly_gather_node_or_team_up,
-                              level_up_gather_items(agent),
+    level_up_plan = ct.AND_P([level_up_gather_items(agent),
                               level_up_meetup(),
-                              level_up_incantation(agent),
-                              level_up_cleanup(reason = "level up done")
-                              ], name= "level up plan"),
-                              name = "guard failure means working for true failure see fail conditions")
+                              level_up_incantation(agent)], name= "level up plan")
+                             
     
-    return ct.OR([
-        ct.AND([level_up_fail_conditions() ,
-                level_up_plan], name = "proceed unless hard fail"),
-          level_up_cleanup(reason = "some level up fail condition triggered" )
-          ], name = "level up fail fallback, level up master node")
+    return level_up_plan
 
 
+   

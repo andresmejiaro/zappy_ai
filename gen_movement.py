@@ -7,6 +7,7 @@ import random
 import gen_teaming as gtem
 from gen_common import gen_interaction
 
+
 DIRECTIONS = list(map(np.array,[[1,0],[0,-1],[-1,0],[0,1]]))
 import random 
 
@@ -163,31 +164,37 @@ def roam(agent: Agent):
 
 
 def marco_polo_screamer(agent: Agent):
-    is_everyone_ready = ct.LOGIC(lambda x: len(x.party.party_members_ready) == len(x.party.party_members), name = "Is everyone here?")
+    from gen_gathering import do_i_have_inventory, level_up_reqs #here to avoid circular imports    
+    
+    reqs = level_up_reqs(agent.level)    
+
+    is_everyone_ready = ct.LOGIC(lambda x: len(x.whos_ready) >= x.set_party_size(x.level) and do_i_have_inventory(x,reqs ,"ready"), name = "Is everyone here?")
     keep_screaming = ct.ALWAYS_F(ct.GEN(gtem.ready_for_incantation, name = "scream so you get here"),
                                  name = "screaming does not make you succeed")
-    return ct.OR([is_everyone_ready, keep_screaming], name = "marco polo screamer selector")
+    return ct.OR([is_everyone_ready ,keep_screaming], "marco_polo_screamer main node")
     
 
 def marco_polo_step(agent:Agent):
-    if agent.party.marco_polo_target is not None:
-        target = agent.party.marco_polo_target  
-    elif agent.party.sound_direction is not None:
-        target = agent.sound_direction(agent.party.sound_direction) + agent.party.pos_at_sound
+    if agent.marco_polo_target is not None:
+        target = agent.marco_polo_target  
+    elif agent.sound_direction is not None:
+        target = agent.sound_directionf(agent.sound_direction) + agent.pos_at_sound
     else:
         return ct.LOGIC(lambda x: False, "No direction to step")
     print(f"pos:{agent.pos} to:{target}")
+    agent.marco_polo_target = None
+    agent.sound_direction = None
     return ct.GEN(lambda x: move_to(target,x),"step towards screamer, marco_polo_step main node")
 
 
 def marco_polo_follower(agent: Agent):
      
-    do_i_have_direction = ct.LOGIC(lambda x: x.party.sound_direction is not None, name = "do i have direction")
+    do_i_have_direction = ct.LOGIC(lambda x: x.sound_direction is not None, name = "do i have direction")
     
     
     
     ### am I there is more layered than before le old sound_direction is zero does not cut it 
-    is_the_it_inside_the_house = ct.LOGIC(lambda x: x.party.sound_direction == 0, name = "is the direction 0?")
+    is_the_it_inside_the_house = ct.LOGIC(lambda x: x.sound_direction == 0, name = "is the direction 0?")
     is_anyone_here = ct.LOGIC(lambda a: a.objects[a.pos[0]][a.pos[1]].count("player")  > 0 , "is_anyone_here")
     am_i_there = ct.GEN(lambda x:ct.AND_P([is_the_it_inside_the_house,
                                   gen_interaction("voir"),
@@ -201,7 +208,7 @@ def marco_polo_follower(agent: Agent):
     
     
     move = ct.GEN(marco_polo_step, "generator for marco polo step")
-    scream = ct.GEN(gtem.ready_for_incantation, name = "scream I arrived")
+    scream = ct.AND_P([ct.GEN(gtem.share_inventory,name ="in case I just leveled up"),ct.GEN(gtem.ready_for_incantation, name = "scream I arrived")],"last before going into incantation")
     step3 = ct.ALWAYS_F(move, "move Success does not mean we are there")
     step2 = ct.OR([ct.AND([am_i_there,scream], "if we are there scream"), step3], "if we are not there move ")
     step1 = ct.OR([ct.AND([do_i_have_direction,step2]),ct.ALWAYS_F(gen_interaction("inventaire"), "fallback marco polo step")],name = "Marco follower main node")
