@@ -29,8 +29,8 @@ class Agent():
         self.objects_countdown = None #timeouts of seen parts of the map, forgets
         self.last_turn = -1 #for control of timeouts last seen turn
         self.name = id(self) #give yourself a name
-        self.ppl_timeouts = {self.name:0} #store<function level_up_fail_conditions.<locals>.<lambda> at 0x79a8eb670720> when last ppl
-        self.ppl_lv = {self.name:-400} #agents 
+        self.ppl_timeouts = {} #store<function level_up_fail_conditions.<locals>.<lambda> at 0x79a8eb670720> when last ppl
+        self.ppl_lv = {} #agents 
         self.ppl_inventories = {}
         self.level_reset()
 
@@ -101,7 +101,7 @@ class Agent():
                             self.objects[x][y] = [w for w in self.objects[x][y] if w != key]
 
     def ppl_cooldown(self):
-        diff = {key:value  - self.turn for key, value in self.ppl_timeouts.items() if self.turn - value  > 400}
+        diff = {key:value  - self.turn for key, value in self.ppl_timeouts.items() if self.turn - value  > 200}
         if len(diff) > 0:
             for key in diff.keys():
                 self.ppl_timeouts.pop(key, None)
@@ -332,7 +332,7 @@ class Agent():
                 if who in self.level_inventory:
                     self.level_inventory.pop(who,None)
                 if who in self.whos_ready:
-                    self.whos_ready.pop(who)
+                    self.whos_ready.remove(who)
 
     def processer_select(self,command: str):
         static_responses = {"ok":self.ok_processer,

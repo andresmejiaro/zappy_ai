@@ -32,8 +32,17 @@ def shorstest_vect(array):
     indmin = np.argmin(indmin)
     return array [indmin]
 
-
 def move_to(target: np.array, agent:Agent, name: None|str = None) -> BTNode:
+    _,tr = move_to_h(target, agent, name)
+    return tr
+
+
+def move_to_distance(target: np.array, agent:Agent, name: None|str = None) -> int:
+    tr, _ = move_to_h(target, agent, name)
+    return tr
+
+
+def move_to_h(target: np.array, agent:Agent, name: None|str = None) -> tuple[int , BTNode]:
         #print(f"moving to: {target}")
         if name is None:
              name =f"move_to->{target}"
@@ -51,7 +60,7 @@ def move_to(target: np.array, agent:Agent, name: None|str = None) -> BTNode:
         targets = list(map(lambda x: x - position, targets))
         displacement = shorstest_vect(targets) 
         if np.linalg.norm(displacement) == 0:
-             return LOGIC(lambda x: True)  
+             return (0,LOGIC(lambda x: True))  
         
                        
         ### movement in x
@@ -89,7 +98,7 @@ def move_to(target: np.array, agent:Agent, name: None|str = None) -> BTNode:
             plan = yoption + movesy + rotate_create(yfacing,xfacing) + movesx
         
         
-        return ct.AND(plan, f"move to plan for target {target}")
+        return (len(plan),ct.AND(plan, f"move to plan for target {target}"))
 
 
 # def distace_matrix(self, agent: Agent)

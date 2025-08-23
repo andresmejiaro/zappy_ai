@@ -39,9 +39,11 @@ def closest_resource(agent: Agent, resource: str):
     found = [np.array([x,y]) for x in range(agent.size[0]) for y in range(agent.size[1]) if resource in agent.objects[x][y]]
     if len(found) == 0:
         return None
-    
-    distances = [agent.pos - x for x in found]
-    return -shorstest_vect(distances) + agent.pos
+
+    distances = [gmov.move_to_distance(x,agent) for x in found]
+    idx  =min(range(len(distances)), key= distances.__getitem__)
+
+    return found[idx]
 
 
 def pick_up(agent: Agent, resource: str) -> ct.BTNode:
@@ -187,12 +189,18 @@ def level_up(agent):
     
     """ 
   
+    announce = ct.AND([ct.LOGIC(lambda x: x.name not in x.ppl_lv, "should I share inv"),
+                      ct.ALWAYS_F(ct.GEN(gtem.share_inventory, "sharing inv"))], "share inv to be seen")
+
+
     
-    
-    level_up_plan = ct.AND_P([level_up_gather_items(agent),
+    main_plan = ct.AND_P([level_up_gather_items(agent),
                               level_up_meetup(),
                               level_up_incantation(agent)], name= "level up plan")
-                             
+
+    level_up_plan = ct.OR([announce,
+            main_plan
+    ], "level_up_plan main node")                         
     
     return level_up_plan
 
