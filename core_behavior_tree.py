@@ -273,7 +273,7 @@ class GEN(BTNode):
         self.timeout_callback = timeout_callback
     
     def run(self, object, log_seq = []):
-        log_seq = log_seq.copy() + [self.name]
+        log_seq = log_seq.copy() + [self.name + f"inv:{object.inventory}"]
         if self.plan is None:
             #try:
                 self.plan = self.generator(object)

@@ -106,6 +106,11 @@ class Agent():
             for key in diff.keys():
                 self.ppl_timeouts.pop(key, None)
                 self.ppl_lv.pop(key,None)
+                if key in self.ready_inventory:
+                    self.ready_inventory.pop(key,None)
+                if key in self.whos_ready:
+                    self.whos_ready.remove(key)
+
 
 
     def update_level_inventory(self):
@@ -132,7 +137,7 @@ class Agent():
     def food_update(self):
         #update 
         time_diff = self.turn - self.last_turn
-        self.inventory["nourriture"] -= time_diff/126
+        self.inventory["nourriture"] -= 1.2*time_diff/(126)
         if time_diff > 0:
             print(f"food: {self.inventory["nourriture"]}")
             self.update_tree = True
@@ -312,14 +317,22 @@ class Agent():
         except Exception as e:
             print(f"Could not decript message {e}")
             return
-        who = message_dict.get("name")
+        who = message_dict.get("name", None)
         lvl = message_dict.get("lvl", -1) 
         if who is None:
             return
         self.ppl_timeouts[who] = self.turn
         if lvl != -1:
+            if who in self.ppl_lv:
+                oldlv = self.ppl_lv[who]
+            else:
+                oldlv = lvl
             self.ppl_lv[who] = lvl
-
+            if oldlv != self.ppl_lv[who]:
+                if who in self.level_inventory:
+                    self.level_inventory.pop(who,None)
+                if who in self.whos_ready:
+                    self.whos_ready.pop(who)
 
     def processer_select(self,command: str):
         static_responses = {"ok":self.ok_processer,
@@ -390,6 +403,7 @@ class Agent():
         processers = {
             "inventory": self.bc_inventory_processer, #generated
             "ready": self.bc_incantation_ready, #generated
+            "fishing": self.bc_went_fishing_processer,
          }
         try:
             message_dict = json.loads(message)
@@ -427,3 +441,5 @@ class Agent():
         self.ppl_inventories[member] = inventory.copy()
 
 
+    def bc_went_fishing_processer(self, message_dict,direction):
+        pass

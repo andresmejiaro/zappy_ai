@@ -165,14 +165,16 @@ def check_quorum(agent):
     reqs = level_up_reqs(agent.level)
     drop_items = ct.GEN(lambda x: drop(x,reqs), name= "level up drop")
  
+    voir_y_inventory = ct.AND_P([gen_interaction("voir"),gen_interaction("inventaire")],"voir and inventaire loop")
+
 
     is_there_enough_ppl = ct.OR([
         ct.LOGIC(lambda l: l.objects[l.pos[0]][l.pos[1]].count("player") >= l.set_party_size(l.level) - 1, name = "can I see ppl here?"),
-        ct.ALWAYS_F(gen_interaction("voir"), f"voir not validate problem: not enough ppl problem")
+        ct.ALWAYS_F(voir_y_inventory, f"voir not validate problem: not enough ppl problem")
     ])
     are_the_items_in_the_ground = ct.OR([
         ct.LOGIC(lambda l: item_ground_count(l,l.pos[0],l.pos[1],reqs), "is the stuff on the ground?"),
-        ct.ALWAYS_F(gen_interaction("voir"), f"voir not validate problem: not enough stuff")
+        ct.ALWAYS_F(voir_y_inventory, f"voir not validate problem: not enough stuff")
     ])
 
     return ct.AND_P([is_there_enough_ppl,

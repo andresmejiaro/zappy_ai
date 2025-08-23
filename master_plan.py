@@ -23,9 +23,9 @@ hunger_not_party = ct.GATE(open_cond= open_cond,close_cond=close_cond, name="ope
 
 
 
-
 find_food_vector = [ ct.OR([hunger_not_party],"conditions to find food"), 
-                     (ct.OR([ct.GEN(lambda x: ggat.pick_up(x,"nourriture"),"pick up food generator")]))]
+                     (ct.OR([
+                         ct.GEN(lambda x: ggat.pick_up(x,"nourriture"),"pick up food generator")]))]
 
 find_food = ct.AND(find_food_vector, name = "find_food")
 
@@ -57,7 +57,7 @@ lay_an_egg =ct.GEN(lambda _: ct.AND_P([ct.LOGIC(lambda x: random.random()< p_lay
 
 
 #master_plan = ct.OR([am_I_almost_declared_dead, lay_an_egg, level_up, ct.ALWAYS_F( gen_interaction("inventaire"), name = "ending inventaire")], name = "master plan")                         
-master_plan = ct.OR([am_I_almost_declared_dead,find_food, lay_an_egg, level_up, ct.ALWAYS_F( gen_interaction("inventaire"), name = "ending inventaire")], name = "master plan")                         
+master_plan = ct.OR([find_food, lay_an_egg, level_up, ct.ALWAYS_F( gen_interaction("inventaire"), name = "ending inventaire")], name = "master plan")                         
 #master_plan = ct.OR([am_I_almost_declared_dead,find_food, level_up, ct.ALWAYS_F( gen_interaction("inventaire"), name = "ending inventaire")], name = "master plan")                     
 #master_plan = ct.OR([am_I_almost_declared_dead, find_food, level_up, ct.ALWAYS_F( gen_interaction("inventaire"), name = "ending inventaire")], name = "master plan")                         
 #master_plan = ct.ALWAYS_F(ct.OR([ct.GEN(lambda x: ggat.pick_up(x,"nourriture"),"pick up food generator"),ct.GEN(gmov.roam)]))

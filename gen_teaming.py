@@ -1,8 +1,5 @@
-import core_behavior_tree as ct
 from gen_common import gen_interaction
 import json
-import random
-import secrets
 
 def share_inventory(x):
     message = {}
@@ -25,3 +22,11 @@ def ready_for_incantation(x):
     return gen_interaction("broadcast",json.dumps(message))
 
 
+def went_fishing(x):
+    message = {}
+    message["kind"] = "fishing"
+    message["lvl"] = 0
+    message["name"] = x.name
+    x.alive_processer(json.dumps(message))
+    x.bc_incantation_ready(message,0)
+    return gen_interaction("broadcast",json.dumps(message))
