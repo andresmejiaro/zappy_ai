@@ -17,6 +17,8 @@ def ready_for_incantation(x):
     message["kind"] = "ready"
     message["lvl"] = x.level
     message["name"] = x.name
+    message["needs"] = x.queen_needs_generator()
+    message["level_up"] = x.call_to_level_up()
     x.alive_processer(json.dumps(message))
     x.bc_incantation_ready(message,0)
     return gen_interaction("broadcast",json.dumps(message))

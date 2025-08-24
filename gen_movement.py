@@ -172,15 +172,15 @@ def roam(agent: Agent):
 
 
 
-def marco_polo_screamer(agent: Agent):
-    from gen_gathering import do_i_have_inventory, level_up_reqs #here to avoid circular imports    
+# def marco_polo_screamer(agent: Agent):
+#     from gen_gathering import do_i_have_inventory, level_up_reqs #here to avoid circular imports    
     
-    reqs = level_up_reqs(agent.level)    
+#     reqs = level_up_reqs(agent.level)    
 
-    is_everyone_ready = ct.LOGIC(lambda x: len(x.whos_ready) >= x.set_party_size(x.level) and do_i_have_inventory(x,reqs ,"ready"), name = "Is everyone here?")
-    keep_screaming = ct.ALWAYS_F(ct.GEN(gtem.ready_for_incantation, name = "scream so you get here"),
-                                 name = "screaming does not make you succeed")
-    return ct.OR([is_everyone_ready ,keep_screaming], "marco_polo_screamer main node")
+#     is_everyone_ready = ct.LOGIC(lambda x: len(x.whos_ready) >= x.set_party_size(x.level) and do_i_have_inventory(x,reqs ,"ready"), name = "Is everyone here?")
+#     keep_screaming = ct.ALWAYS_F(ct.GEN(gtem.ready_for_incantation, name = "scream so you get here"),
+#                                  name = "screaming does not make you succeed")
+#     return ct.OR([is_everyone_ready ,keep_screaming], "marco_polo_screamer main node")
     
 
 def marco_polo_step(agent:Agent):

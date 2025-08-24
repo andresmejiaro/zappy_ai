@@ -2,7 +2,8 @@ import time
 import random
 import numpy as np
 import json
-
+import math
+from functools import reduce
 
 random.seed(42)
 
@@ -32,7 +33,7 @@ class Agent():
         self.ppl_timeouts = {} #store<function level_up_fail_conditions.<locals>.<lambda> at 0x79a8eb670720> when last ppl
         self.ppl_lv = {} #agents 
         self.ppl_inventories = {}
-        self.level_reset()
+        self.queen_reset()
 
 
     def starting_command(self, command: str):
@@ -72,10 +73,6 @@ class Agent():
                 self.objects_countdown = np.zeros(self.size) 
                 self.starting += 1
 
-    def set_party_size(self,lv):
-        ps =[1,2,2,4,4,6,6,1]
-        return ps[lv-1]
-
     def objects_cooldown(self): 
         if self.objects_countdown is not None:
             needs = {
@@ -101,16 +98,12 @@ class Agent():
                             self.objects[x][y] = [w for w in self.objects[x][y] if w != key]
 
     def ppl_cooldown(self):
-        diff = {key:value  - self.turn for key, value in self.ppl_timeouts.items() if self.turn - value  > 200}
+        diff = {key:value  - self.turn for key, value in self.ppl_timeouts.items() if self.turn - value  > 600}
         if len(diff) > 0:
             for key in diff.keys():
                 self.ppl_timeouts.pop(key, None)
                 self.ppl_lv.pop(key,None)
-                if key in self.ready_inventory:
-                    self.ready_inventory.pop(key,None)
-                if key in self.whos_ready:
-                    self.whos_ready.remove(key)
-
+        
 
 
     def update_level_inventory(self):
@@ -123,16 +116,6 @@ class Agent():
                 if person in self.ppl_inventories:
                     self.level_inventory[thing] += self.ppl_inventories[person].get(thing,0) 
 
-    def update_ready_inventory(self):
-        self.ready_inventory = {}
-        for thing in self.inventory.keys():
-            self.ready_inventory[thing] = 0
-            for person, level in self.ppl_lv.items():
-                if level != self.level:
-                    continue
-                if person in self.ppl_inventories:
-                    self.ready_inventory[thing] += self.ppl_inventories[person].get(thing,0) 
-        return self.ready_inventory
     
     def food_update(self):
         #update 
@@ -287,18 +270,16 @@ class Agent():
         if x[0] == "inventaire":
             self.inventaire_processer(command)
 
-    def level_reset(self):
+    def queen_reset(self):
         self.sound_direction = None
         self.marco_polo_target = None
-        self.whos_ready = []
-        self.level_inventory = {}
-        self.ready_inventory = {}
-        self.timeout = None
+        self.needs = {}
+        self.level_up = False
 
     def niveau_actuel_processer(self,command):
         levels = command.split(":")
         self.level = int(levels[1])
-        self.level_reset()
+        self.queen_reset()
         self.turn += 300
         self.resolve_from_running_routine("incantation")
 
@@ -403,7 +384,6 @@ class Agent():
         processers = {
             "inventory": self.bc_inventory_processer, #generated
             "ready": self.bc_incantation_ready, #generated
-            "fishing": self.bc_went_fishing_processer,
          }
         try:
             message_dict = json.loads(message)
@@ -420,16 +400,15 @@ class Agent():
     def bc_incantation_ready(self, message_dict, direction):
         """
         """
-        level = message_dict.get("lvl")
-        if level != self.level:
-            return
-        name = message_dict.get("name")
-        if name not in self.whos_ready:
-            self.whos_ready.append(name)        
+        #level = message_dict.get("lvl")
+        #name = message_dict.get("name")
         self.sound_direction = direction
         self.pos_at_sound = self.pos.copy()
+        self.needs = message_dict["needs"]
         if direction == 0:
-            self.marco_polo_target = self.pos
+            self.marco_polo_target = self.pos.copy()
+        if self.name in message_dict.get("level_up",[]):
+            self.level_up = True
 
     def bc_inventory_processer(self, message_dict,direction):
         """
@@ -440,6 +419,59 @@ class Agent():
         inventory = message_dict.get("inventory")
         self.ppl_inventories[member] = inventory.copy()
 
+    def queen_needs_generator(self):
+        needs = self.drone_needs()
+        xpos = self.pos[0]
+        ypos = self.pos[1]
+        for stone in self.inventory.keys():
+            if stone == "nourriture":
+                continue
+            needs[stone] = max(0, needs.get(stone,0) - self.objects[xpos][ypos].count(stone))
+        return needs 
 
-    def bc_went_fishing_processer(self, message_dict,direction):
-        pass
+    def drone_buckets(self):
+        import gen_gathering as ggat
+        ppl_lv = [list(self.ppl_lv.values()).count(x+1) for x in range(8)]
+        buckets = [math.ceil(x/ggat.level_up_party_size(n+1)) for n,x in enumerate(ppl_lv)]
+        return buckets
+
+    def drone_needs(self):
+        import gen_gathering as ggat
+        collect_needs = {}
+        buckets = self.drone_buckets()
+        reqs = list(map(lambda w: [ggat.level_up_reqs(w[0]+1)] * w[1]  ,enumerate(buckets)))
+        reqs = reduce(lambda x,y: x +y, reqs)
+        for stone in self.inventory.keys():
+            for entry in reqs:
+                collect_needs[stone] = collect_needs.get(stone,0) + entry.get(stone,0)
+        return collect_needs
+    
+    def item_ground_count(self,floor: list,reqs:dict)->bool:
+        for key, value in reqs.items():
+            if floor.count(key) < value:
+                return False
+        return True
+
+
+    def call_to_level_up(self):
+        import gen_gathering as ggat
+        buckets = self.drone_buckets()
+        floor_contents = self.objects[self.pos[0]][self.pos[1]].copy()
+        known_players = self.ppl_lv.copy()
+        if self.name in known_players:
+           del known_players[self.name]
+        called_players = [] 
+        for lvl, nbuckets in enumerate(buckets):
+            for j in range(nbuckets):
+                if self.item_ground_count(floor_contents, ggat.level_up_reqs(lvl+1)) and list(known_players.values()).count(lvl + 1) >= ggat.level_up_party_size(lvl +1): 
+                    lvl_players = [player for player, level in known_players.items() if level == lvl+1]
+                    for h in range(ggat.level_up_party_size(lvl +1)):
+                        who = lvl_players.pop()
+                        called_players.append(who)
+                        del known_players[who]
+                    for k,v in ggat.level_up_reqs(lvl+1).items():
+                        for u in range(v):
+                            if k in floor_contents:
+                                floor_contents.remove(k)
+        return called_players
+

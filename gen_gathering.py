@@ -31,17 +31,27 @@ def drop(agent: Agent,inventory: dict) -> ct.BTNode:
         return to_return
     return ct.LOGIC(lambda x: True, "True")
 
+
+def drop_drone(agent: Agent,) -> ct.BTNode:
+    all_inv = agent.inventory.copy()
+    all_inv["nourriture"] = 0 # agent.queen hungry
+    return drop(agent,all_inv)
+
+
 def closest_resource(agent: Agent, resource: str):
     """
     Finds the coordinate of the nearest known resource 
     """
+    if agent.marco_polo_target is None:
+        mpt = np.array([-99,-99])
+    else:
+        mpt = agent.marco_polo_target.copy()
 
-    found = [np.array([x,y]) for x in range(agent.size[0]) for y in range(agent.size[1]) if resource in agent.objects[x][y]]
+    found = [np.array([x,y]) for x in range(agent.size[0]) for y in range(agent.size[1]) if resource in agent.objects[x][y] and not np.array_equal(np.array([x,y]), mpt)]
     if len(found) == 0:
         return None
-
     distances = [gmov.move_to_distance(x,agent) for x in found]
-    idx  =min(range(len(distances)), key= distances.__getitem__)
+    idx  = min(range(len(distances)), key= distances.__getitem__)
 
     return found[idx]
 
@@ -89,6 +99,35 @@ def gather(agent,resources: dict, individual = False)->ct.BTNode:
   
     print(f"gather: {resources} inventory:{inv}")
     return ct.OR([check,gather_node], name = f"gather: {resources} inventory:{inv}")
+
+def resource_choose(resources: dict, n = 3)-> dict:
+        total = sum(resources.values())
+        n = min(n, total)
+        list_form =[]
+        for k,v in resources.items():
+            list_form.extend([k]*v)
+        random.shuffle(list_form)
+        list_form = list_form[0:n]
+        result = {}
+        for x in list_form:
+            if result.get(x,0) == 0:
+                result[x] = 1
+            else:
+                result[x] +=1
+        return result
+
+def drone_gather(agent)->ct.BTNode:
+    choice = resource_choose(agent.needs)
+    choice["nourriture"] = agent.inventory["nourriture"] + choice.get("nourriture",0) + 1 # + self.hungry + self.queen_hungry
+    return gather(agent,choice,individual=True)
+
+
+def level_up_party_size(lv):
+    ps =[1,2,2,4,4,6,6,1]
+    return ps[lv-1]
+
+
+
 
 def level_up_reqs(aclv):
     lreq =[{"linemate":1}, #1->2

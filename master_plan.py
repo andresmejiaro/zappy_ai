@@ -5,59 +5,78 @@ from gen_common import gen_interaction
 import numpy as np
 import gen_teaming as gtem
 import random 
-
-## 0th plan is to roam
-
-#roam_gen = ct.GEN(gmov.roam)
-
-### first plan is to be alive
-
-very_hungry_will_drop_anything = 10
-tank_full = 20
-prefer_food_over_lvup_if_not_party = 16
-
-open_cond= lambda x: x.inventory["nourriture"] < prefer_food_over_lvup_if_not_party 
-close_cond = lambda x: x.inventory["nourriture"] > tank_full
-hunger_not_party = ct.GATE(open_cond= open_cond,close_cond=close_cond, name="open hunger")
+from typing import Callable
+from domain_agent import Agent
 
 
 
-
-find_food_vector = [ ct.OR([hunger_not_party],"conditions to find food"), 
-                     (ct.OR([
-                         ct.GEN(lambda x: ggat.pick_up(x,"nourriture"),"pick up food generator")]))]
-
-find_food = ct.AND(find_food_vector, name = "find_food")
-
-
-
-#### trird plan is to level up to level 2
-
-level_up = ct.GEN(lambda x: ggat.level_up(x), name = "level up main", reset_on_failure=False, timeout=3000, timeout_callback= lambda x: x.level_reset())
-
-
-###
-
-#gooble = ct.AND([ct.LOGIC(lambda x: np.array_equal(ggat.closest_resource(x,"nourriture"),x.pos ) ), gen_interaction("prend", "nourriture") ], name = "oportunistic food")
-
-# am_I_almost_declared_dead = ct.AND([ct.LOGIC(lambda x: x.turn - x.ppl_timeouts.get(x.name,x.turn)  >= 350, "am I missing?"),
-#                                     ct.GEN(gtem.share_inventory, "share inv so they know ur good")
-#                                     ], "am_I_almost_declared_dead logic")
+def if_else_node(cond: Callable[[Agent], bool] , pos:ct.BTNode, neg: ct.BTNode, comment = "")-> ct.BTNode:
+  """
+  Creates if else condition in nodes
+  """
+  return  ct.OR([
+        ct.AND([
+            ct.LOGIC(cond,"if_else_logic "+ comment),
+                pos
+                ],"if_else_and pos" + comment),
+                ct.AND([
+            ct.LOGIC(lambda x: not cond(x),"if_else_logic "+ comment),
+                neg
+                ],"if_else_and neg" + comment) 
+           
+         ], "if_else_or "+comment)
 
 
-
-#######
-p_lay_egg = 0.004
-lay_an_egg =ct.GEN(lambda _: ct.AND_P([ct.LOGIC(lambda x: random.random()< p_lay_egg and len(x.ppl_lv)<12 and x.level > 1, "lay an egg lottery"),
-                    gen_interaction("fork")
-                    ]), "lay_an_egg main node"
-                    )
-
-
+def loop_node_blocking(loop_list: list[ct.BTNode], comment= ""):
+  """
+  loops though the list needs S to move to the next item 
+  """
+  return ct.GEN(
+    lambda _: ct.AND_P(loop_list, f"loop_node_blocking AND_P {comment}")
+  , f"looṕ_node_blocking generator {comment}")
 
 
-master_plan = ct.OR([ lay_an_egg, level_up, ct.ALWAYS_F( gen_interaction("inventaire"), name = "ending inventaire")], name = "master plan")                         
-#master_plan = ct.OR([find_food, lay_an_egg, level_up, ct.ALWAYS_F( gen_interaction("inventaire"), name = "ending inventaire")], name = "master plan")                         
-#master_plan = ct.OR([am_I_almost_declared_dead,find_food, level_up, ct.ALWAYS_F( gen_interaction("inventaire"), name = "ending inventaire")], name = "master plan")                     
-#master_plan = ct.OR([am_I_almost_declared_dead, find_food, level_up, ct.ALWAYS_F( gen_interaction("inventaire"), name = "ending inventaire")], name = "master plan")                         
-#master_plan = ct.ALWAYS_F(ct.OR([ct.GEN(lambda x: ggat.pick_up(x,"nourriture"),"pick up food generator"),ct.GEN(gmov.roam)]))
+def loop_node_non_blocking(loop_list: list[ct.BTNode], comment= ""):
+  """
+  loops though the list attempts everything once and moves on. 
+  """
+  loop_list2 = [ct.ALWAYS_S(x, f"looṕ_node_non_blocking block removal {comment}") for x in loop_list]
+
+  return ct.GEN(
+    lambda _: ct.AND_P(loop_list2, f"loop_node_non_blocking AND_P {comment}")
+  , f"looṕ_node_non_blocking generator {comment}")
+
+false_node = ct.LOGIC(lambda _: False, "false node")
+
+#roam_and_come_back = ct.GEN(lambda x: ct.AND([ct.GEN(lambda x: gmov.move_to(np.array([9,9]),x)), ct.GEN(lambda x: gmov.move_to(x.marco_polo_target,x))]), "roam and come back")
+
+tog = ggat.level_up_reqs(7)
+
+gather_and_come_back = ct.GEN(lambda x:
+                              ct.AND_P([
+                                ct.GEN(lambda x: ggat.drone_gather(x)),
+                                ct.GEN(lambda x: gmov.move_to(x.marco_polo_target,x)),
+                                ct.GEN(lambda x: ggat.drop_drone(x)),
+                              ])
+                              )
+
+
+find_queen_or_gather = if_else_node(lambda x: x.marco_polo_target is None, ct.GEN(gmov.marco_polo_follower),gather_and_come_back , "find_queen_or_gather")
+
+
+mark_me_alive = if_else_node(lambda x: x.name not in x.ppl_lv.keys(), ct.GEN(gtem.share_inventory),false_node, "mark me alive")
+
+update_needs = ct.GEN(gtem.ready_for_incantation, "update_needs")
+
+queen_logic = loop_node_non_blocking([gen_interaction("voir"), update_needs],"queen logic")
+
+drone_logic = ct.OR([find_queen_or_gather], "drone logic main node")
+
+role_selector = if_else_node(lambda x: x.name == max(x.ppl_lv.keys()),queen_logic, drone_logic, "role selector node")
+
+
+master_plan = ct.OR([
+  mark_me_alive,
+  role_selector,
+  gen_interaction("inventaire")
+])
