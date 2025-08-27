@@ -37,7 +37,9 @@ class Agent():
         self.ppl_lv = {} #agents 
         self.ppl_inventories = {}
         self.last_called = []
+        self.free_egg = True
         self.queen_reset()
+
 
     def queen_reset(self):
         self.sound_direction = None
@@ -50,6 +52,7 @@ class Agent():
         self.fork = False   
         self.queen = None
         self.level_up_cooldown = None
+        self.queen_food = 10
 
     def starting_command(self, command: str):
         if self.starting == 0:
@@ -73,7 +76,7 @@ class Agent():
                 print(f"No se identifico el numero de clientes de manera correcta {command}")
         if self.starting == 2:
             coords = command.split(' ')
-            if command == "0":
+            if len(command) == 1:
                 return
             if len(coords) != 2:
                 self.starting = 4
@@ -201,6 +204,7 @@ class Agent():
   
     def fork_processer(self,command,x):
         self.fork = False
+        self.free_egg = False
         self.turn += 42
         self.resolve_from_running_routine(x)
 
@@ -429,6 +433,7 @@ class Agent():
         self.pos_at_sound = self.pos.copy()
         self.needs = message_dict.get("needs",{})
         self.fork = message_dict.get("fork",False)
+        self.queen_food = message_dict.get("food", 0)
         if direction == 0:
             self.marco_polo_target = self.pos.copy()
             self.marco_polo_confirm += 1

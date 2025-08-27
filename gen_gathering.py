@@ -35,7 +35,13 @@ def drop(agent: Agent,inventory: dict) -> ct.BTNode:
 def drop_drone(agent: Agent,) -> ct.BTNode:
     all_inv = agent.inventory.copy()
     all_inv["nourriture"] = 0 # agent.queen hungry
-    return drop(agent,all_inv)
+    food_to_remove = int(max(0,agent.inventory["nourriture"] - 5))*(agent.queen_food < 8)
+
+    food_drop = [gen_interaction("pose","nourriture") ] * food_to_remove
+    food_drop.append(drop(agent,all_inv))
+
+    return ct.AND_P(food_drop)
+    
 
 
 def closest_resource(agent: Agent, resource: str):

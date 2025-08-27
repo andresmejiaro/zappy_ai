@@ -17,10 +17,15 @@ def ready_for_incantation(x):
     message["kind"] = "ready"
     message["lvl"] = x.level
     message["name"] = x.name
-    message["needs"] = x.queen_needs_generator()
-    message["level_up"] = x.call_to_level_up()
-    message["fork"] = x.fork_generator()
     message["food"] = x.inventory["nourriture"]
+    if x.inventory["nourriture"] <10:
+        message["needs"] = {}
+        message["level_up"] = []
+        message["fork"] = False
+    else:
+        message["needs"] = x.queen_needs_generator()
+        message["level_up"] = x.call_to_level_up()
+        message["fork"] = x.fork_generator()
     x.alive_processer(json.dumps(message))
     x.bc_incantation_ready(message,0)
     return gen_interaction("broadcast",json.dumps(message))
