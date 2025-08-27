@@ -70,18 +70,19 @@ def do_i_roam(agent: Agent):
 
 
 def do_i_pick_something(agent: Agent):
-  if agent.marco_polo_target is not None:
-    distance_home = gmov.move_to_distance(agent.marco_polo_target,agent)
-  else:
-    distance_home = 9999
+  if agent.marco_polo_target is None:
+    return True
+  is_queen_hungry_and_can_feed = agent.inventory["nourriture"] > 13 and agent.queen_food < 10
+  if is_queen_hungry_and_can_feed:
+    return False
+  distance_home = gmov.move_to_distance(agent.marco_polo_target,agent)
   resource_distances = {stone:ggat.closest_resource(agent,stone)[0] for stone in agent.inventory.keys()}
   looking_for = agent.needs
   considered = {stone:distance for stone,distance in resource_distances.items() if stone in looking_for and looking_for[stone] > 0 and distance is not None}
   stones_colected = sum(agent.inventory.values()) - agent.inventory["nourriture"]
   closest_resource = [s for s,d in considered.items() if d == min(considered.values())]  
-  is_queen_hungry_and_can_feed = agent.inventory["nourriture"] > 8 and agent.queen_food < 5
   
-  return ((len(considered) > 0  and (stones_colected < 3 or considered[closest_resource[0]] < distance_home) )) and not is_queen_hungry_and_can_feed
+  return (len(considered) > 0  and (stones_colected < 3)) or considered[closest_resource[0]] < distance_home  
 
 
 def closest_resource_pickout(agent: Agent):
@@ -185,13 +186,15 @@ voir_after_settled = if_else_node(lambda x: x.turn > 300, gen_interaction("voir"
 
 queen_logic = loop_node_non_blocking([queen_snack,voir_after_settled, update_needs],"queen logic")
 
-drone_logic = ct.OR([drone_snack,fork,find_queen,find_food, level_up, gather_or_home], "drone logic main node")
+drone_logic = ct.OR([drone_snack,fork,find_queen, level_up, gather_or_home], "drone logic main node")
 
 role_selector = if_else_node(lambda x: x.name == max(x.ppl_lv.keys()) and x.turn > 40 ,queen_logic, drone_logic, "role selector node")
 
 
 master_plan = ct.OR([
+  find_food,
   mark_me_alive,
   role_selector,
   gen_interaction("inventaire")
 ], "master plan")
+

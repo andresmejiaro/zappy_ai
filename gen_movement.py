@@ -208,7 +208,8 @@ def marco_polo_follower(agent: Agent):
     am_i_there = ct.GEN(lambda x:ct.AND_P([is_the_it_inside_the_house,
                                   gen_interaction("voir"),
                                   is_anyone_here,
-                                  is_the_it_inside_the_house]
+                                  is_the_it_inside_the_house,
+                                  gen_interaction("prend","nourriture")]
                                     ,"am i there logic"
                                 ),
                                 "am I there generator (for reset)"

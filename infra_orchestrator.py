@@ -32,6 +32,10 @@ class Orchester():
                 self.partial_msg = temp[1]
             s = self.partial_msg.find(b'\n')
 
+    def can_put_into_queue(self):
+        if len(self.agent.running_routine) == 0:
+            return True       
+        return False
 
     def main_loop(self, args):
         #try:
@@ -50,7 +54,7 @@ class Orchester():
                     self.process_input(input)
                     self.agent.food_update()
                     if  self.agent.starting >= 3:
-                        if len(self.agent.running_routine) == 0:
+                        if self.can_put_into_queue():
                             w = self.plan.run(self.agent)
                                 # log = json.dumps(self.plan.log())
                                 # log_path = f"logs/log_{self.agent.name}.jsonl"

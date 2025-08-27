@@ -29,6 +29,7 @@ class Agent():
         self.facing = 0 #direction facing wrt spawning point
         self.turn = 0 # internal control of time
         self.inventory ={"nourriture": 10, "linemate": 0, "deraumere": 0, "sibur": 0, "mendiane": 0, "phiras": 0, "thystame": 0} # starting inventory updates whenever inventory is seen
+        self.ok_debt = 0
         self.level = 1 #level
         self.objects_countdown = None #timeouts of seen parts of the map, forgets
         self.last_turn = -1 #for control of timeouts last seen turn
@@ -208,7 +209,7 @@ class Agent():
         self.turn += 42
         self.resolve_from_running_routine(x)
 
-    def ok_processer(self, command):
+    def ok_processer(self, command, fake = False):
         okaiable_commands = {"avance": self.avance_processer,
                              "droite": self.droite_processer,
                              "gauche": self.gauche_processer,
@@ -217,6 +218,11 @@ class Agent():
                               "expulse": self.expulse_processer,
                               "broadcast": self.broadcast_processer,
                                "fork": self.fork_processer}    
+        if not fake and self.ok_debt > 0:
+            self.ok_debt -= 1
+            return
+        if fake:
+            self.ok_debt += 1
         for i in range(len(self.running_routine)):
             for j in okaiable_commands.keys():
                 if self.running_routine[i][0].startswith(j):
@@ -368,8 +374,11 @@ class Agent():
 
 
     def generate_message(self, args)->str:
-        if len(self.unsent_commands) > 0 and len(self.running_routine) < 10:
+        if len(self.unsent_commands) > 0 and len(self.running_routine) < 10 and self.ok_debt <10:
             y = self.unsent_commands.pop(0)
+            okaible = ["avance","droite", "gauche","fork"]
+            if y in okaible or y.startswith("broadcast"):
+                self.ok_processer(y,fake=True)            
             return y
         else:
             return ""
