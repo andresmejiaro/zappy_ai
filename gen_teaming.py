@@ -19,16 +19,10 @@ def ready_for_incantation(x):
     message["name"] = x.name
     message["needs"] = x.queen_needs_generator()
     message["level_up"] = x.call_to_level_up()
+    message["fork"] = x.fork_generator()
+    message["food"] = x.inventory["nourriture"]
     x.alive_processer(json.dumps(message))
     x.bc_incantation_ready(message,0)
     return gen_interaction("broadcast",json.dumps(message))
 
 
-def went_fishing(x):
-    message = {}
-    message["kind"] = "fishing"
-    message["lvl"] = 0
-    message["name"] = x.name
-    x.alive_processer(json.dumps(message))
-    x.bc_incantation_ready(message,0)
-    return gen_interaction("broadcast",json.dumps(message))

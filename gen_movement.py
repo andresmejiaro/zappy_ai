@@ -217,9 +217,8 @@ def marco_polo_follower(agent: Agent):
     
     
     move = ct.GEN(marco_polo_step, "generator for marco polo step")
-    scream = ct.AND_P([ct.GEN(gtem.share_inventory,name ="in case I just leveled up"),ct.GEN(gtem.ready_for_incantation, name = "scream I arrived")],"last before going into incantation")
     step3 = ct.ALWAYS_F(move, "move Success does not mean we are there")
-    step2 = ct.OR([ct.AND([am_i_there,scream], "if we are there scream"), step3], "if we are not there move ")
+    step2 = ct.OR([ct.AND([am_i_there], "if we are there scream"), step3], "if we are not there move ")
     step1 = ct.OR([ct.AND([do_i_have_direction,step2]),ct.ALWAYS_F(gen_interaction("inventaire"), "fallback marco polo step")],name = "Marco follower main node")
 
     

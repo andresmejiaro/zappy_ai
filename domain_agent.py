@@ -4,6 +4,9 @@ import numpy as np
 import json
 import math
 from functools import reduce
+import os
+
+
 
 random.seed(42)
 
@@ -29,12 +32,24 @@ class Agent():
         self.level = 1 #level
         self.objects_countdown = None #timeouts of seen parts of the map, forgets
         self.last_turn = -1 #for control of timeouts last seen turn
-        self.name = id(self) #give yourself a name
+        self.name = os.getpid() #give yourself a name
         self.ppl_timeouts = {} #store<function level_up_fail_conditions.<locals>.<lambda> at 0x79a8eb670720> when last ppl
         self.ppl_lv = {} #agents 
         self.ppl_inventories = {}
+        self.last_called = []
         self.queen_reset()
 
+    def queen_reset(self):
+        self.sound_direction = None
+        self.marco_polo_target = None
+        self.marco_polo_confirm = 0
+        self.needs = {}
+        self.level_up = False
+        self.level_up_count = 0
+        self.last_fork = self.turn
+        self.fork = False   
+        self.queen = None
+        self.level_up_cooldown = None
 
     def starting_command(self, command: str):
         if self.starting == 0:
@@ -125,6 +140,8 @@ class Agent():
             print(f"food: {self.inventory["nourriture"]}")
             self.update_tree = True
         self.last_turn = self.turn
+        if self.level_up_cooldown is not None and self.turn - self.level_up_cooldown > 600:
+            self.level_up_cooldown = None
         self.objects_cooldown()
         self.ppl_cooldown()
 
@@ -158,8 +175,11 @@ class Agent():
         if status == "ok":
             print(f"Picking up {things[1]}")
             self.inventory[things[1]] += 1
-        if things[1] in self.objects[self.pos[0]][self.pos[1]]:
-            self.objects[self.pos[0]][self.pos[1]].remove(things[1])
+            if things[1] in self.objects[self.pos[0]][self.pos[1]]:
+                self.objects[self.pos[0]][self.pos[1]].remove(things[1])
+        elif status == "ko":
+            while things[1] in self.objects[self.pos[0]][self.pos[1]]:
+                self.objects[self.pos[0]][self.pos[1]].remove(things[1])
         self.turn += 7
         self.resolve_from_running_routine(x, status)
 
@@ -180,6 +200,7 @@ class Agent():
         self.resolve_from_running_routine(x)
   
     def fork_processer(self,command,x):
+        self.fork = False
         self.turn += 42
         self.resolve_from_running_routine(x)
 
@@ -215,6 +236,12 @@ class Agent():
 
     def incantation_ko(self, command,x,status = "ko"):
         self.turn += 300
+        if self.level_up_count < 5:
+            self.level_up_count += 1
+        else:
+            self.level_up_count = 0
+            self.level_up = False
+            self.level_up_cooldown =  self.turn
         self.resolve_from_running_routine("incantation","ko")
         
     def elevation_en_cours_processer(self,command):
@@ -270,11 +297,7 @@ class Agent():
         if x[0] == "inventaire":
             self.inventaire_processer(command)
 
-    def queen_reset(self):
-        self.sound_direction = None
-        self.marco_polo_target = None
-        self.needs = {}
-        self.level_up = False
+
 
     def niveau_actuel_processer(self,command):
         levels = command.split(":")
@@ -309,11 +332,6 @@ class Agent():
             else:
                 oldlv = lvl
             self.ppl_lv[who] = lvl
-            if oldlv != self.ppl_lv[who]:
-                if who in self.level_inventory:
-                    self.level_inventory.pop(who,None)
-                if who in self.whos_ready:
-                    self.whos_ready.remove(who)
 
     def processer_select(self,command: str):
         static_responses = {"ok":self.ok_processer,
@@ -402,11 +420,20 @@ class Agent():
         """
         #level = message_dict.get("lvl")
         #name = message_dict.get("name")
+        if self.queen is None:
+            self.queen = message_dict["name"]
+        if self.queen > message_dict["name"]:
+            return
+        self.queen = message_dict["name"]      
         self.sound_direction = direction
         self.pos_at_sound = self.pos.copy()
-        self.needs = message_dict["needs"]
+        self.needs = message_dict.get("needs",{})
+        self.fork = message_dict.get("fork",False)
         if direction == 0:
             self.marco_polo_target = self.pos.copy()
+            self.marco_polo_confirm += 1
+        elif np.array_equal(self.marco_polo_target, self.pos):
+            self.marco_polo_target = None
         if self.name in message_dict.get("level_up",[]):
             self.level_up = True
 
@@ -431,7 +458,8 @@ class Agent():
 
     def drone_buckets(self):
         import gen_gathering as ggat
-        ppl_lv = [list(self.ppl_lv.values()).count(x+1) for x in range(8)]
+        ppl_lv2 = {k:v for k,v in self.ppl_lv.items() if k != self.name and k not in self.last_called}        
+        ppl_lv = [list(ppl_lv2.values()).count(x+1) for x in range(8)]
         buckets = [math.ceil(x/ggat.level_up_party_size(n+1)) for n,x in enumerate(ppl_lv)]
         return buckets
 
@@ -464,7 +492,9 @@ class Agent():
         for lvl, nbuckets in enumerate(buckets):
             for j in range(nbuckets):
                 if self.item_ground_count(floor_contents, ggat.level_up_reqs(lvl+1)) and list(known_players.values()).count(lvl + 1) >= ggat.level_up_party_size(lvl +1): 
-                    lvl_players = [player for player, level in known_players.items() if level == lvl+1]
+                    lvl_players = [player for player, level in known_players.items() if level == lvl+1 and player not in self.last_called]
+                    if len(lvl_players) < ggat.level_up_party_size(lvl +1):
+                        continue
                     for h in range(ggat.level_up_party_size(lvl +1)):
                         who = lvl_players.pop()
                         called_players.append(who)
@@ -473,5 +503,11 @@ class Agent():
                         for u in range(v):
                             if k in floor_contents:
                                 floor_contents.remove(k)
+        self.last_called = called_players
         return called_players
 
+    def fork_generator(self):
+        if self.turn - self.last_fork > 600 and len(self.ppl_lv) < 11:
+            self.last_fork = self.turn
+            return True
+        return False

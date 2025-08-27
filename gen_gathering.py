@@ -24,7 +24,7 @@ def drop(agent: Agent,inventory: dict) -> ct.BTNode:
     actions = []
     for key, value in inventory.items():
         n_to_drop = min(value, agent.inventory[key])
-        actions2 = map(lambda x: gen_interaction("pose",x),[key] * n_to_drop)
+        actions2 = map(lambda x: gen_interaction("pose",x),[key] * int(n_to_drop))
         actions.extend(actions2)
     if len(actions) > 0:
         to_return = ct.AND_P(actions, name=f"drop {inventory}" )
@@ -49,20 +49,23 @@ def closest_resource(agent: Agent, resource: str):
 
     found = [np.array([x,y]) for x in range(agent.size[0]) for y in range(agent.size[1]) if resource in agent.objects[x][y] and not np.array_equal(np.array([x,y]), mpt)]
     if len(found) == 0:
-        return None
+        return (None,None)
     distances = [gmov.move_to_distance(x,agent) for x in found]
     idx  = min(range(len(distances)), key= distances.__getitem__)
+    n = min(distances)
 
-    return found[idx]
+    return (n,found[idx])
 
 
 def pick_up(agent: Agent, resource: str) -> ct.BTNode:
-    def pick_up_plan(agent):
-        x = closest_resource(agent, resource)
-        if x is None or len(x) == 0:
+    def pick_up_plan(agent: Agent):
+        _,x = closest_resource(agent, resource)
+        if x is None or len(x) == 0 or np.array_equal(agent.marco_polo_target, x):
             return ct.LOGIC(lambda x: False)
         actions = move_to(x, agent)
-        actions = [actions, ct.Interaction("prend",resource), ct.Interaction("inventaire")]
+        from master_plan import if_else_node, false_node
+        safety = if_else_node(lambda x: np.array_equal(x.pos,x.marco_polo_target),false_node,ct.Interaction("prend",resource) )
+        actions = [actions,safety , ct.Interaction("inventaire")]
         return ct.AND(actions, name = f"pick up {resource}")  
     return  ct.OR([ct.GEN(pick_up_plan), 
                    ct.ALWAYS_F(ct.GEN(gmov.roam))])
@@ -95,9 +98,7 @@ def do_i_have_inventory(agent, resources: dict, individual = None)->bool:
 def gather(agent,resources: dict, individual = False)->ct.BTNode:
     inv = inventory_selector(agent, individual)
     check = ct.LOGIC(lambda x: do_i_have_inventory(x,resources, individual), name = "gather check Inv")
-    gather_node = ct.ALWAYS_F(ct.GEN(lambda x: pick_up_multiple(x,resources), name = "gather collector"))
-  
-    print(f"gather: {resources} inventory:{inv}")
+    gather_node = ct.ALWAYS_F(ct.GEN(lambda x: pick_up_multiple(x,resources), name = "gather collector")) 
     return ct.OR([check,gather_node], name = f"gather: {resources} inventory:{inv}")
 
 def resource_choose(resources: dict, n = 3)-> dict:
@@ -114,13 +115,17 @@ def resource_choose(resources: dict, n = 3)-> dict:
                 result[x] = 1
             else:
                 result[x] +=1
-        return result
+        #return result
+        return resources
 
 def drone_gather(agent)->ct.BTNode:
     choice = resource_choose(agent.needs)
-    choice["nourriture"] = agent.inventory["nourriture"] + choice.get("nourriture",0) + 1 # + self.hungry + self.queen_hungry
-    return gather(agent,choice,individual=True)
-
+    choice["nourriture"] = 0 # + self.hungry + self.queen_hungry
+    plan = gather(agent,choice,individual=True)
+    fp = []
+    fp.append(plan)
+    fp.extend([ct.GEN(lambda x: pick_up(x, "nourriture"))])
+    return ct.AND_P(fp)
 
 def level_up_party_size(lv):
     ps =[1,2,2,4,4,6,6,1]
@@ -204,13 +209,13 @@ def item_ground_count(agent,x,y,reqs:dict)->bool:
 
 def check_quorum(agent):
     reqs = level_up_reqs(agent.level)
-    drop_items = ct.GEN(lambda x: drop(x,reqs), name= "level up drop")
+    
  
     voir_y_inventory = ct.AND_P([gen_interaction("voir"),gen_interaction("inventaire")],"voir and inventaire loop")
 
 
     is_there_enough_ppl = ct.OR([
-        ct.LOGIC(lambda l: l.objects[l.pos[0]][l.pos[1]].count("player") >= l.set_party_size(l.level) - 1, name = "can I see ppl here?"),
+        ct.LOGIC(lambda l: l.objects[l.pos[0]][l.pos[1]].count("player") >= level_up_party_size(l.level) , name = "can I see ppl here?"),
         ct.ALWAYS_F(voir_y_inventory, f"voir not validate problem: not enough ppl problem")
     ])
     are_the_items_in_the_ground = ct.OR([
@@ -219,7 +224,6 @@ def check_quorum(agent):
     ])
 
     return ct.AND_P([is_there_enough_ppl,
-              drop_items,
               are_the_items_in_the_ground
               ], "chack quorum master node")
 
