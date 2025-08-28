@@ -170,20 +170,50 @@ find_food_q = ct.AND(find_food_vector_q, name = "find_food")
 
 
 
+# level_up_process = ct.GEN(lambda x:
+#                               ct.AND_P([
+#                                 ct.GEN(lambda x: gmov.move_to(x.marco_polo_target,x)),
+#                                 ct.GEN(ggat.check_quorum),
+#                                 gen_interaction("incantation"),
+#                               ])
+#                               )
+
+
+# def check_quorum(agent):
+#     reqs = level_up_reqs(agent.level)
+    
+ 
+#     voir_y_inventory = ct.AND_P([gen_interaction("voir"),gen_interaction("inventaire")],"voir and inventaire loop")
+
+
+#     is_there_enough_ppl = ct.OR([
+#         ct.LOGIC(lambda l: l.objects[l.pos[0]][l.pos[1]].count("player") >= level_up_party_size(l.level) , name = "can I see ppl here?"),
+#         ct.ALWAYS_F(voir_y_inventory, f"voir not validate problem: not enough ppl problem")
+#     ])
+#     are_the_items_in_the_ground = ct.OR([
+#         ct.LOGIC(lambda l: item_ground_count(l,l.pos[0],l.pos[1],reqs), "is the stuff on the ground?"),
+#         ct.ALWAYS_F(voir_y_inventory, f"voir not validate problem: not enough stuff")
+#     ])
+
+#     return ct.AND_P([is_there_enough_ppl,
+#               are_the_items_in_the_ground
+#               ], "chack quorum master node")
+
+
+
+voir_y_inventory =ct.GEN(lambda _: ct.AND_P([gen_interaction("voir"),gen_interaction("inventaire")],"voir and inventaire loop"),"voir and inventaire loop")
+
+
+level_up_process_3 = if_else_node(lambda l: ggat.item_ground_count(l,l.pos[0],l.pos[1],ggat.level_up_reqs(l.level)), gen_interaction("incantation"), voir_y_inventory,"level_up_process_2")
+
+level_up_process_2 = if_else_node(lambda l: l.objects[l.pos[0]][l.pos[1]].count("player") >= ggat.level_up_party_size(l.level), level_up_process_3, voir_y_inventory,"level_up_process_2")
+
+
+level_up_process = if_else_node(lambda x: np.array_equal(x.pos,x.marco_polo_target), level_up_process_2, ct.GEN(lambda x: gmov.move_to(x.marco_polo_target,x)), "level_up_process")
 
 
 
 
-
-
-
-level_up_process = ct.GEN(lambda x:
-                              ct.AND_P([
-                                ct.GEN(lambda x: gmov.move_to(x.marco_polo_target,x)),
-                                ct.GEN(ggat.check_quorum),
-                                gen_interaction("incantation"),
-                              ])
-                              )
 
 level_up = if_else_node(lambda x: x.level_up and x.marco_polo_target is not None , level_up_process, false_node, "level up main node")
 
