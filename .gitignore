@@ -4,3 +4,8 @@ __pycache__
 logs
 counter*.py
 supervi*
+*.egg-info/
+**/*.egg-info/
+.eggs/
+build/
+dist/
