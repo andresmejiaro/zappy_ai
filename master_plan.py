@@ -199,6 +199,8 @@ queen_snack = if_else_node(lambda x: "nourriture" in x.objects[x.pos[0]][x.pos[1
 
 drone_snack = if_else_node(lambda x: "nourriture" in x.objects[x.pos[0]][x.pos[1]] and not np.array_equal(x.marco_polo_target, x.pos), gen_interaction("prend", "nourriture"), false_node, "drone snack")
 
+drone_snack2 = if_else_node(lambda x: "thystame" in x.objects[x.pos[0]][x.pos[1]] and not np.array_equal(x.marco_polo_target, x.pos), gen_interaction("prend", "thystame"), false_node, "drone snack thystame")
+
 mark_me_alive = if_else_node(lambda x: x.name not in x.ppl_lv.keys() or x.name not in x.ppl_timeouts or  x.turn - x.ppl_timeouts[x.name] > 550, ct.GEN(gtem.share_inventory),false_node, "mark me alive")
 
 update_needs = if_else_node(lambda x: x.queen_totem is None or np.array_equal(x.pos, x.queen_totem), ct.GEN(gtem.ready_for_incantation, "update_needs"),ct.GEN(lambda x: gmov.move_to(x.queen_totem,x, "back to totem")))
@@ -212,7 +214,7 @@ voir_after_settled = if_else_node(lambda x: x.turn > 300, gen_interaction("voir"
 
 queen_logic = ct.OR([find_food_q,loop_node_non_blocking([queen_snack,voir_after_settled, update_needs],"queen logic")],"queen food or main")
 
-drone_logic = ct.OR([drone_snack,  find_food,find_queen, level_up, gather_or_home], "drone logic main node")
+drone_logic = ct.OR([drone_snack,drone_snack2,  find_food,find_queen, level_up, gather_or_home], "drone logic main node")
 
 role_selector = if_else_node(lambda x: x.name == max(x.ppl_lv.keys()) and x.turn > 40 ,queen_logic, drone_logic, "role selector node")
 
