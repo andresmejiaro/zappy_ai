@@ -1,11 +1,11 @@
-from domain_agent import Agent
-import core_behavior_tree as ct
-from gen_common import gen_interaction
-from gen_movement import move_to
-import gen_movement as gmov
+from zappy_ai.domain_agent import Agent
+import zappy_ai.core_behavior_tree as ct
+from zappy_ai.gen_common import gen_interaction
+from zappy_ai.gen_movement import move_to
+import zappy_ai.gen_movement as gmov
 import numpy as np
 import random
-import gen_teaming as gtem
+import zappy_ai.gen_teaming as gtem
 
 
 def drop(agent: Agent, inventory: dict) -> ct.BTNode:
@@ -67,7 +67,7 @@ def pick_up(agent: Agent, resource: str, just_go=False) -> ct.BTNode:
         actions = move_to(x, agent)
         if just_go:
             return actions
-        from master_plan import if_else_node, false_node
+        from zappy_ai.master_plan import if_else_node, false_node
         safety = if_else_node(
             lambda x: np.array_equal(
                 x.pos, x.marco_polo_target), false_node, ct.Interaction(

@@ -1,7 +1,7 @@
 import socket
 import select
-from domain_agent import Agent
-from core_behavior_tree import BTNode
+from zappy_ai.domain_agent import Agent
+from zappy_ai.core_behavior_tree import BTNode
 
 
 class Orchester():

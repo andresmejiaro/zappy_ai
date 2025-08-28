@@ -1,4 +1,4 @@
-import core_behavior_tree as ct
+import zappy_ai.core_behavior_tree as ct
 
 
 def gen_interaction(command, resource=''):

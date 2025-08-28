@@ -1,7 +1,7 @@
 import argparse
-from infra_orchestrator import Orchester
-from domain_agent import Agent
-from master_plan import master_plan
+from zappy_ai.infra_orchestrator import Orchester
+from zappy_ai.domain_agent import Agent
+from zappy_ai.master_plan import master_plan
 
 
 def parse_args():

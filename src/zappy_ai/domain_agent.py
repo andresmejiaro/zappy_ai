@@ -490,7 +490,7 @@ class Agent():
         return needs
 
     def drone_buckets(self):
-        import gen_gathering as ggat
+        import zappy_ai.gen_gathering as ggat
         ppl_lv2 = {k: v for k, v in self.ppl_lv.items(
         ) if k != self.name and k not in self.last_called}
         ppl_lv = [list(ppl_lv2.values()).count(x + 1) for x in range(8)]
@@ -499,7 +499,7 @@ class Agent():
         return buckets
 
     def drone_needs(self):
-        import gen_gathering as ggat
+        import zappy_ai.gen_gathering as ggat
         collect_needs = {}
         buckets = self.drone_buckets()
         reqs = list(map(lambda w: [ggat.level_up_reqs(
@@ -518,7 +518,7 @@ class Agent():
         return True
 
     def call_to_level_up(self):
-        import gen_gathering as ggat
+        import zappy_ai.gen_gathering as ggat
         buckets = self.drone_buckets()
         floor_contents = self.objects[self.pos[0]][self.pos[1]].copy()
         known_players = self.ppl_lv.copy()

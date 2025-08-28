@@ -1,12 +1,12 @@
-import core_behavior_tree as ct
-import gen_movement as gmov
-import gen_gathering as ggat
-from gen_common import gen_interaction
+import zappy_ai.core_behavior_tree as ct
+import zappy_ai.gen_movement as gmov
+import zappy_ai.gen_gathering as ggat
+from zappy_ai.gen_common import gen_interaction
 import numpy as np
-import gen_teaming as gtem
+import zappy_ai.gen_teaming as gtem
 import random
 from typing import Callable
-from domain_agent import Agent
+from zappy_ai.domain_agent import Agent
 
 
 def if_else_node(cond: Callable[[Agent],

@@ -1,4 +1,4 @@
-from gen_common import gen_interaction
+from zappy_ai.gen_common import gen_interaction
 import json
 
 

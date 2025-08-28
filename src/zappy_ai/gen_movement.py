@@ -1,8 +1,8 @@
-from core_behavior_tree import BTNode, LOGIC
-import core_behavior_tree as ct
-from domain_agent import Agent
+from zappy_ai.core_behavior_tree import BTNode, LOGIC
+import zappy_ai.core_behavior_tree as ct
+from zappy_ai.domain_agent import Agent
 import numpy as np
-from gen_common import gen_interaction
+from zappy_ai.gen_common import gen_interaction
 
 DIRECTIONS = list(map(np.array, [[1, 0], [0, -1], [-1, 0], [0, 1]]))
 
