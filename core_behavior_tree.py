@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 import random
 from typing import Callable, Any
+import time 
 import json
 
 class Status(Enum):
@@ -368,9 +369,12 @@ class Interaction(BTNode):
         self.started = False
         self._last_return = None
 
-
     def run(self,object, log_seq):
         log_seq = log_seq.copy() + [self.name]
+        if object.marco_polo_target is None:
+            mpt = None
+        else:
+            mpt = object.marco_polo_target.tolist()
         if not self.started:
             object.unsent_commands.append(self.command)
             signature = hash(random.random())
@@ -379,13 +383,13 @@ class Interaction(BTNode):
             self.started = True
             self._last_return = Status.O
             with open(f"logs/highlight_{object.name}.jsonl", "a") as f:
-                f.write(json.dumps({"t": object.turn, "name": object.name, "lvl": object.level, "path": log_seq, "s": "O"}) + "\n")
+                f.write(json.dumps({"turn": object.turn, "unix_time":time.time(), "name": object.name, "lvl": object.level, "path": log_seq, "s": "O","inventory": object.inventory, "pos": object.pos.tolist(), "totem":mpt,"action":self.command}) + "\n")
                 f.flush()
             return Status.O
         else:
             self._last_return = self.check_status(object)
             with open(f"logs/highlight_{object.name}.jsonl", "a") as f:
-                f.write(json.dumps({"t": object.turn, "name": object.name, "lvl": object.level, "path": log_seq, "s": self._last_return.name}) + "\n")
+                f.write(json.dumps({"turn": object.turn,"unix_time":time.time(), "name": object.name, "lvl": object.level, "path": log_seq, "s": self._last_return.name,"inventory": object.inventory, "pos": object.pos.tolist(), "totem":mpt,"action": self.command}) + "\n")
                 f.flush()
             return self._last_return
 

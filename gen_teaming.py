@@ -13,11 +13,17 @@ def share_inventory(x):
 
 
 def ready_for_incantation(x):
+    if x.queen_totem is None:
+        x.queen_totem = x.pos.copy()
     message = {}
     message["kind"] = "ready"
     message["lvl"] = x.level
     message["name"] = x.name
     message["food"] = x.inventory["nourriture"]
+    if x.inventory["nourriture"] < 6:
+        message["fishing"] = True
+    else:
+        message["fishing"] = False
     if x.inventory["nourriture"] <10:
         message["needs"] = {}
         message["level_up"] = []

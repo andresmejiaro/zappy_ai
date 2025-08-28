@@ -40,6 +40,7 @@ class Agent():
         self.last_called = []
         self.free_egg = True
         self.queen_reset()
+        self.nb_client = 0
 
 
     def queen_reset(self):
@@ -54,6 +55,8 @@ class Agent():
         self.queen = None
         self.level_up_cooldown = None
         self.queen_food = 10
+        self.queen_fishing = False
+        self.queen_totem = None
 
     def starting_command(self, command: str):
         if self.starting == 0:
@@ -122,6 +125,11 @@ class Agent():
             for key in diff.keys():
                 self.ppl_timeouts.pop(key, None)
                 self.ppl_lv.pop(key,None)
+                self.ppl_inventories.pop(key,None)
+        
+        time_diff = self.turn - self.last_turn
+        for k in self.ppl_inventories:
+            self.ppl_inventories[k]["nourriture"] -= 1.2*time_diff/(126)
         
 
 
@@ -361,6 +369,10 @@ class Agent():
         print(f"Unknown command type {command} returning empty handler. Command will be ignored")
         return lambda x: None
     
+    def numeric_processer(self, command):
+        self.nb_client = int(command)
+        self.resolve_from_running_routine("connect_nbr")
+
     ### process command from server
     def command(self, command):
         print(f"Recieved command: {command}")
@@ -376,9 +388,9 @@ class Agent():
     def generate_message(self, args)->str:
         if len(self.unsent_commands) > 0 and len(self.running_routine) < 10 and self.ok_debt <10:
             y = self.unsent_commands.pop(0)
-            okaible = ["avance","droite", "gauche","fork"]
-            if y in okaible or y.startswith("broadcast"):
-                self.ok_processer(y,fake=True)            
+            # okaible = ["avance","droite", "gauche","fork"]
+            # if y in okaible or y.startswith("broadcast"):
+            #     self.ok_processer(y,fake=True)            
             return y
         else:
             return ""
@@ -443,6 +455,7 @@ class Agent():
         self.needs = message_dict.get("needs",{})
         self.fork = message_dict.get("fork",False)
         self.queen_food = message_dict.get("food", 0)
+        self.queen_fishing = message_dict.get("fishing", False)
         if direction == 0:
             self.marco_polo_target = self.pos.copy()
             self.marco_polo_confirm += 1
@@ -506,7 +519,7 @@ class Agent():
         for lvl, nbuckets in enumerate(buckets):
             for j in range(nbuckets):
                 if self.item_ground_count(floor_contents, ggat.level_up_reqs(lvl+1)) and list(known_players.values()).count(lvl + 1) >= ggat.level_up_party_size(lvl +1): 
-                    lvl_players = [player for player, level in known_players.items() if level == lvl+1 and player not in self.last_called]
+                    lvl_players = [player for player, level in known_players.items() if level == lvl+1 and  self.ppl_inventories[player]["nourriture"]>10]
                     if len(lvl_players) < ggat.level_up_party_size(lvl +1):
                         continue
                     for h in range(ggat.level_up_party_size(lvl +1)):
@@ -517,11 +530,10 @@ class Agent():
                         for u in range(v):
                             if k in floor_contents:
                                 floor_contents.remove(k)
-        self.last_called = called_players
         return called_players
 
     def fork_generator(self):
-        if self.turn - self.last_fork > 600 and len(self.ppl_lv) < 11:
+        if self.turn - self.last_fork > 600 and len(self.ppl_lv) < 30:
             self.last_fork = self.turn
             return True
         return False

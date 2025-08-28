@@ -67,8 +67,8 @@ class Orchester():
                     if len(message) > 0:
                         print(f"sending message: {message}")
                         import numpy as np
-                        if message.startswith("prend") and np.array_equal(self.agent.pos, self.agent.marco_polo_target) and max(self.agent.ppl_inventories.keys()) != self.agent.name:
-                            raise Exception("WTF")
+                        # if message.startswith("prend") and np.array_equal(self.agent.pos, self.agent.marco_polo_target) and max(self.agent.ppl_inventories.keys()) != self.agent.name:
+                        #     raise Exception("WTF")
                         client.sendall((message + '\n').encode())
         #except ConnectionRefusedError:
         #    print("Server is down. Unable to connect.")

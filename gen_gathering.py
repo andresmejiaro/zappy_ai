@@ -27,7 +27,7 @@ def drop(agent: Agent,inventory: dict) -> ct.BTNode:
         actions2 = map(lambda x: gen_interaction("pose",x),[key] * int(n_to_drop))
         actions.extend(actions2)
     if len(actions) > 0:
-        to_return = ct.AND_P(actions, name=f"drop {inventory}" )
+        to_return = ct.AND_P(actions, name=f"drop stuff" )
         return to_return
     return ct.LOGIC(lambda x: True, "True")
 
@@ -35,7 +35,7 @@ def drop(agent: Agent,inventory: dict) -> ct.BTNode:
 def drop_drone(agent: Agent,) -> ct.BTNode:
     all_inv = agent.inventory.copy()
     all_inv["nourriture"] = 0 # agent.queen hungry
-    food_to_remove = int(max(0,agent.inventory["nourriture"] - 5))*(agent.queen_food < 8)
+    food_to_remove = int(max(0,agent.inventory["nourriture"] - 5))*(agent.queen_food < 20)
 
     food_drop = [gen_interaction("pose","nourriture") ] * food_to_remove
     food_drop.append(drop(agent,all_inv))
@@ -63,12 +63,14 @@ def closest_resource(agent: Agent, resource: str):
     return (n,found[idx])
 
 
-def pick_up(agent: Agent, resource: str) -> ct.BTNode:
+def pick_up(agent: Agent, resource: str, just_go = False) -> ct.BTNode:
     def pick_up_plan(agent: Agent):
         _,x = closest_resource(agent, resource)
         if x is None or len(x) == 0 or np.array_equal(agent.marco_polo_target, x):
             return ct.LOGIC(lambda x: False)
         actions = move_to(x, agent)
+        if just_go:
+            return actions
         from master_plan import if_else_node, false_node
         safety = if_else_node(lambda x: np.array_equal(x.pos,x.marco_polo_target),false_node,ct.Interaction("prend",resource) )
         actions = [actions,safety , ct.Interaction("inventaire")]
@@ -87,12 +89,12 @@ def pick_up_multiple(agent, resources: dict, individual = False)->ct.BTNode:
         if inv.get(key,0) < value:
             look4.append( key)
     random.shuffle(look4)
-    w = map(lambda x: ct.GEN(lambda y: pick_up(y, x), name = f"pick_up call on {x}"), look4)
+    w = map(lambda x: ct.GEN(lambda y: pick_up(y, x), name = f"pick_up call on "), look4)
     w = list(w)
     if len(w) == 0:
         return ct.LOGIC(lambda x: True, "True")
     z = ct.OR(w, name="pick_up_multiple")
-    return ct.AND_P([z, ct.GEN(gtem.share_inventory, "share inventory generator pick up multiple")], name = f"pick up multiple main node inv:{inv}")
+    return ct.AND_P([z, ct.GEN(gtem.share_inventory, "share inventory generator pick up multiple")], name = f"pick up multiple main node ")
 
 def do_i_have_inventory(agent, resources: dict, individual = None)->bool:
     inv = inventory_selector(agent, individual)
@@ -105,7 +107,7 @@ def gather(agent,resources: dict, individual = False)->ct.BTNode:
     inv = inventory_selector(agent, individual)
     check = ct.LOGIC(lambda x: do_i_have_inventory(x,resources, individual), name = "gather check Inv")
     gather_node = ct.ALWAYS_F(ct.GEN(lambda x: pick_up_multiple(x,resources), name = "gather collector")) 
-    return ct.OR([check,gather_node], name = f"gather: {resources} inventory:{inv}")
+    return ct.OR([check,gather_node], name = f"gather: inventory:")
 
 def resource_choose(resources: dict, n = 3)-> dict:
         total = sum(resources.values())
@@ -124,14 +126,14 @@ def resource_choose(resources: dict, n = 3)-> dict:
         #return result
         return resources
 
-def drone_gather(agent)->ct.BTNode:
-    choice = resource_choose(agent.needs)
-    choice["nourriture"] = 0 # + self.hungry + self.queen_hungry
-    plan = gather(agent,choice,individual=True)
-    fp = []
-    fp.append(plan)
-    fp.extend([ct.GEN(lambda x: pick_up(x, "nourriture"))])
-    return ct.AND_P(fp)
+# def drone_gather(agent)->ct.BTNode:
+#     choice = resource_choose(agent.needs)
+#     choice["nourriture"] = 0 # + self.hungry + self.queen_hungry
+#     plan = gather(agent,choice,individual=True)
+#     fp = []
+#     fp.append(plan)
+#     fp.extend([ct.GEN(lambda x: pick_up(x, "nourriture"))])
+#     return ct.AND_P(fp)
 
 def level_up_party_size(lv):
     ps =[1,2,2,4,4,6,6,1]

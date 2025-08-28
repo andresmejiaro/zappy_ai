@@ -70,6 +70,8 @@ def do_i_roam(agent: Agent):
 
 
 def do_i_pick_something(agent: Agent):
+  if agent.queen_fishing:
+    return True
   if agent.marco_polo_target is None:
     return True
   is_queen_hungry_and_can_feed = agent.inventory["nourriture"] > 13 and agent.queen_food < 10
@@ -81,13 +83,18 @@ def do_i_pick_something(agent: Agent):
   considered = {stone:distance for stone,distance in resource_distances.items() if stone in looking_for and looking_for[stone] > 0 and distance is not None}
   stones_colected = sum(agent.inventory.values()) - agent.inventory["nourriture"]
   closest_resource = [s for s,d in considered.items() if d == min(considered.values())]  
-  
-  return (len(considered) > 0  and (stones_colected < 3)) or considered[closest_resource[0]] < distance_home  
+  away_from_home = not np.array_equal(agent.pos,agent.marco_polo_target) and stones_colected < 3
+  at_home =  np.array_equal(agent.pos,agent.marco_polo_target) and stones_colected == 0 and not is_queen_hungry_and_can_feed
+
+
+  return away_from_home or at_home or (len(considered) > 0 and considered[closest_resource[0]] < distance_home)  
 
 
 def closest_resource_pickout(agent: Agent):
   resource_distances = {stone:ggat.closest_resource(agent,stone)[0] for stone in agent.inventory.keys()}
-  looking_for = agent.needs
+  looking_for = agent.needs.copy()
+  if agent.inventory["nourriture"] < 15:
+    looking_for ={"nourriture":1}
   considered = {stone:distance for stone,distance in resource_distances.items() if stone in looking_for and looking_for[stone] > 0 and distance is not None}
   closest_resource = [s for s,d in considered.items() if d == min(considered.values())]
   if len(closest_resource) == 0:
@@ -133,19 +140,33 @@ gather_or_home = if_else_node(do_i_pick_something,ct.GEN(closest_resource_pickou
 
 
 
-open_cond= lambda x: x.inventory["nourriture"] < 12 
-close_cond = lambda x: x.inventory["nourriture"] > 15
-hunger_not_party = ct.GATE(open_cond= open_cond,close_cond=close_cond, name="open hunger")
+
+# open_cond= lambda x: x.inventory["nourriture"] < 10 or x.queen_fishing
+# close_cond = lambda x: x.inventory["nourriture"] > 15
+# hunger_not_party = ct.GATE(open_cond= open_cond,close_cond=close_cond, name="open hunger")
 
 
 
+# find_food_vector = [ ct.OR([hunger_not_party],"conditions to find food"), 
+#                      (ct.OR([
+#                          ct.GEN(lambda x: ggat.pick_up(x,"nourriture"),"pick up food generator")]))]
 
-find_food_vector = [ ct.OR([hunger_not_party],"conditions to find food"), 
+# find_food = ct.AND(find_food_vector, name = "find_food")
+
+find_food = if_else_node(lambda x: x.inventory["nourriture"] < 10 or x.queen_fishing,ct.GEN(lambda x: ggat.pick_up(x,"nourriture"),"pick up food generator"), false_node, "find food" )
+
+
+open_cond_q= lambda x: x.inventory["nourriture"] < 5 
+close_cond_q = lambda x: x.inventory["nourriture"] > 15
+hunger_queen = ct.GATE(open_cond= open_cond_q,close_cond=close_cond_q, name="open hunger")
+
+
+
+find_food_vector_q = [ ct.OR([hunger_queen],"conditions to find food queen"), 
                      (ct.OR([
-                         ct.GEN(lambda x: ggat.pick_up(x,"nourriture"),"pick up food generator")]))]
+                         ct.GEN(lambda x: ggat.pick_up(x,"nourriture"),"pick up food generator queen")]))]
 
-find_food = ct.AND(find_food_vector, name = "find_food")
-
+find_food_q = ct.AND(find_food_vector_q, name = "find_food")
 
 
 
@@ -159,40 +180,57 @@ find_food = ct.AND(find_food_vector, name = "find_food")
 level_up_process = ct.GEN(lambda x:
                               ct.AND_P([
                                 ct.GEN(lambda x: gmov.move_to(x.marco_polo_target,x)),
-                                ct.O_ON_F(ct.GEN(ggat.check_quorum)),
+                                ct.GEN(ggat.check_quorum),
                                 gen_interaction("incantation"),
                               ])
                               )
 
-level_up = if_else_node(lambda x: x.level_up and x.marco_polo_target is not None , level_up_process, false_node)
+level_up = if_else_node(lambda x: x.level_up and x.marco_polo_target is not None , level_up_process, false_node, "level up main node")
 
 
 find_queen = if_else_node(lambda x: (x.marco_polo_target is None or x.marco_polo_confirm < 3) and not  x.inventory["nourriture"] < 3, ct.GEN(gmov.marco_polo_follower),false_node , "find_queen")
 
 
-fork = if_else_node(lambda x: x.fork or x.free_egg, gen_interaction("fork"), false_node)
+fork = if_else_node(lambda x: (x.fork or x.free_egg) and x.nb_client == 0, gen_interaction("fork"), false_node)
 
 queen_snack = if_else_node(lambda x: "nourriture" in x.objects[x.pos[0]][x.pos[1]], gen_interaction("prend", "nourriture"), false_node)
 
-drone_snack = if_else_node(lambda x: "nourriture" in x.objects[x.pos[0]][x.pos[1]] and not np.array_equal(x.marco_polo_target, x.pos), gen_interaction("prend", "nourriture"), false_node)
+
+
+drone_snack = if_else_node(lambda x: "nourriture" in x.objects[x.pos[0]][x.pos[1]] and not np.array_equal(x.marco_polo_target, x.pos), gen_interaction("prend", "nourriture"), false_node, "drone snack")
 
 mark_me_alive = if_else_node(lambda x: x.name not in x.ppl_lv.keys() or x.name not in x.ppl_timeouts or  x.turn - x.ppl_timeouts[x.name] > 550, ct.GEN(gtem.share_inventory),false_node, "mark me alive")
 
-update_needs = ct.GEN(gtem.ready_for_incantation, "update_needs")
+update_needs = if_else_node(lambda x: x.queen_totem is None or np.array_equal(x.pos, x.queen_totem), ct.GEN(gtem.ready_for_incantation, "update_needs"),ct.GEN(lambda x: gmov.move_to(x.queen_totem,x, "back to totem")))
 
 
-voir_after_settled = if_else_node(lambda x: x.turn > 300, gen_interaction("voir"),ct.LOGIC(lambda x:True))
+voir_after_settled = if_else_node(lambda x: x.turn > 300, gen_interaction("voir"),ct.LOGIC(lambda x:True), "voir only after the 300th turn")
 
 
-queen_logic = loop_node_non_blocking([queen_snack,voir_after_settled, update_needs],"queen logic")
+#queen_find_food = if_else_node(lambda x: x.turn < 3700, find_food, false_node , "queen find food")
 
-drone_logic = ct.OR([drone_snack,fork,find_queen, level_up, gather_or_home], "drone logic main node")
+
+queen_logic = ct.OR([find_food_q,loop_node_non_blocking([queen_snack,voir_after_settled, update_needs],"queen logic")],"queen food or main")
+
+drone_logic = ct.OR([drone_snack,  find_food,find_queen, level_up, gather_or_home], "drone logic main node")
 
 role_selector = if_else_node(lambda x: x.name == max(x.ppl_lv.keys()) and x.turn > 40 ,queen_logic, drone_logic, "role selector node")
 
 
+lv2 = ct.AND_P([ct.GEN(lambda x: ggat.pick_up(x, "linemate", just_go=True)), gen_interaction("incantation")])
+
+
+first = if_else_node(lambda x: x.level <2, lv2,false_node)
+
+connect_nbr = if_else_node(lambda x: random.random()<0.01,gen_interaction("connect_nbr"),false_node)
+
+master_plan = lv2
+
+
 master_plan = ct.OR([
-  find_food,
+  connect_nbr,
+  fork,
+  first,
   mark_me_alive,
   role_selector,
   gen_interaction("inventaire")
