@@ -1,15 +1,16 @@
 from gen_common import gen_interaction
 import json
 
+
 def share_inventory(x):
     message = {}
     message["kind"] = "inventory"
     message["lvl"] = x.level
     message["name"] = x.name
     message["inventory"] = x.inventory
-    x.bc_inventory_processer(message,0)
+    x.bc_inventory_processer(message, 0)
     x.alive_processer(json.dumps(message))
-    return gen_interaction("broadcast",json.dumps(message))
+    return gen_interaction("broadcast", json.dumps(message))
 
 
 def ready_for_incantation(x):
@@ -24,7 +25,7 @@ def ready_for_incantation(x):
         message["fishing"] = True
     else:
         message["fishing"] = False
-    if x.inventory["nourriture"] <10:
+    if x.inventory["nourriture"] < 10:
         message["needs"] = {}
         message["level_up"] = []
         message["fork"] = False
@@ -33,7 +34,5 @@ def ready_for_incantation(x):
         message["level_up"] = x.call_to_level_up()
         message["fork"] = x.fork_generator()
     x.alive_processer(json.dumps(message))
-    x.bc_incantation_ready(message,0)
-    return gen_interaction("broadcast",json.dumps(message))
-
-
+    x.bc_incantation_ready(message, 0)
+    return gen_interaction("broadcast", json.dumps(message))

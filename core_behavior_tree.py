@@ -3,81 +3,68 @@ from abc import ABC, abstractmethod
 from enum import Enum
 import random
 from typing import Callable, Any
-import time 
+import time
 import json
+
 
 class Status(Enum):
     S = 1
     F = -1
     O = 0
-    
+
 
 class BTNode(ABC):
-    def __init__(self,name: str |None = None):
-        self._log = {}
+    def __init__(self, name: str | None = None):
         if name is None:
             self.name = f"node{id(self)}"
         else:
             self.name = name
-        self._log["name"] = self.name
 
     def __repr__(self):
         cls = self.__class__.__name__
         return f"{cls}(name = {self.name!r})"
- 
+
     @abstractmethod
     def run(self, object, log_seq):
         pass
 
-    @abstractmethod
-    def log(self):
-        pass
-    
 
 class AND(BTNode):
     """
     Sequential memoryless
     """
-    def __init__(self, actions: list[BTNode], name: str|None = None):
+
+    def __init__(self, actions: list[BTNode], name: str | None = None):
         super().__init__(name)
         self.actions = actions
         self._last_return = None
         self._key_node = None
-    
-    
-    def run(self,object, log_seq = []):
+
+    def run(self, object, log_seq=[]):
         log_seq = log_seq.copy() + [self.name]
         for action in self.actions:
             self._key_node = action
             w = action.run(object, log_seq)
             if w != Status.S:
-                self._last_return = w         
+                self._last_return = w
                 return w
         self._last_return = Status.S
         return Status.S
-    
-    def log(self):
-        self._log["kind"] = "AND"
-        if self._last_return is not None:
-            self._log["return"] = self._last_return.name
-        self._log["children"] = { f"{n}":k.log() for n,k in enumerate(self.actions)}
-        if self._key_node is not None:
-            self._log["key_node"] = self._key_node.name
-        return self._log
 
 
 class AND_P(BTNode):
     """
     Sequential with memory
     """
-    def __init__(self, actions: list[BTNode], name: str|None = None):
+
+    def __init__(self, actions: list[BTNode], name: str | None = None):
         super().__init__(name)
         self.actions = actions
         self.action_n = 0
         self._last_return = None
         self._key_node = None
-    
-    def run(self,object, log_seq = []):
+
+    def run(self, object, log_seq=[]):
         log_seq = log_seq.copy() + [self.name]
         if self.action_n >= len(self.actions):
             self._key_node = "done"
@@ -92,57 +79,37 @@ class AND_P(BTNode):
             self.action_n += 1
         self._last_return = Status.O
         return Status.O
-    
-    def log(self):
-        self._log["kind"] = "AND_P"
-        if self._last_return is not None:
-            self._log["return"] = self._last_return.name
-        self._log["children"] = { f"{n}":k.log() for n,k in enumerate(self.actions)}
-        if self._key_node is not None and self._key_node != "done":
-            self._log["key_node"] = self._key_node.name
-        elif self._key_node == "done":
-            self._log["key_node"] = "done"
-        return self._log
+
 
 class OR(BTNode):
-    def __init__(self, actions: list[BTNode], name: str|None = None):
+    def __init__(self, actions: list[BTNode], name: str | None = None):
         super().__init__(name)
         self.actions = actions
         self._last_return = None
         self._key_node = None
 
-    
-    def run(self,object, log_seq = []):
+    def run(self, object, log_seq=[]):
         log_seq = log_seq.copy() + [self.name]
         for action in self.actions:
             w = action.run(object, log_seq)
             if w in [Status.S, Status.O]:
                 self._key_node = action
                 self._last_return = w
-                return w        
+                return w
         self._key_node = None
         self._last_return = Status.F
         return Status.F
-    
-    def log(self):
-        self._log["kind"] = "OR "
-        if self._last_return is not None:
-            self._log["return"] = self._last_return.name
-        self._log["children"] = { f"{n}":k.log() for n,k in enumerate(self.actions) if k is not None}
-        if self._key_node is not None:
-            self._log["key_node"] = self._key_node.name        
-        return self._log
+
 
 class NOT(BTNode):
-    def __init__(self, A1:BTNode, name: str|None = None):
+    def __init__(self, A1: BTNode, name: str | None = None):
         super().__init__(name)
         self.A1 = A1
         self._last_return = None
-        
 
-    def run(self, object, log_seq = []):
+    def run(self, object, log_seq=[]):
         log_seq = log_seq.copy() + [self.name]
-        w =self.A1.run(object)
+        w = self.A1.run(object)
         if w == Status.F:
             self._last_return = Status.S
             return Status.S
@@ -150,73 +117,54 @@ class NOT(BTNode):
             self._last_return = Status.F
             return Status.F
         self._last_return = w
-        return w 
-    
-    def log(self):
-        self._log["kind"] = "NOT"
-        if self._last_return is not None:
-            self._log["return"] = self._last_return.name
-        self._log["children"] = { "1": self.A1.log()}
-        return self._log
-  
+        return w
+
 
 class ALWAYS_F(BTNode):
-    def __init__(self, A1:BTNode, name: str|None = None):
+    def __init__(self, A1: BTNode, name: str | None = None):
         super().__init__(name)
         self.A1 = A1
         self._last_return = None
 
-    def run(self, object, log_seq = []):
+    def run(self, object, log_seq=[]):
         log_seq = log_seq.copy() + [self.name]
-        w =self.A1.run(object, log_seq)
+        w = self.A1.run(object, log_seq)
         self._last_return = Status.F
         if w == Status.F:
             return Status.F
         if w == Status.S:
             return Status.F
         self._last_return = w
-        return w 
-    
-    def log(self):
-        self._log["kind"] = "ALWAYS_F"
-        if self._last_return is not None:
-            self._log["return"] = self._last_return.name
-        self._log["children"] = { "1": self.A1.log()}
-        return self._log
-    
+        return w
+
+
 class O_ON_F(BTNode):
-    def __init__(self, A1:BTNode, name: str|None = None):
+    def __init__(self, A1: BTNode, name: str | None = None):
         super().__init__(name)
         self.A1 = A1
         self._last_return = None
 
-    def run(self, object, log_seq = []):
+    def run(self, object, log_seq=[]):
         log_seq = log_seq.copy() + [self.name]
-        w =self.A1.run(object, log_seq)
+        w = self.A1.run(object, log_seq)
         self._last_return = Status.O
         if w == Status.F:
             return Status.O
         if w == Status.O:
             return Status.O
         self._last_return = w
-        return w 
-    
-    def log(self):
-        self._log["kind"] = "O_ON_F"
-        if self._last_return is not None:
-            self._log["return"] = self._last_return.name
-        self._log["children"] = { "1": self.A1.log()}
-        return self._log
+        return w
+
 
 class ALWAYS_S(BTNode):
-    def __init__(self, A1:BTNode, name: str|None = None):
+    def __init__(self, A1: BTNode, name: str | None = None):
         super().__init__(name)
         self.A1 = A1
         self._last_return = None
 
-    def run(self, object, log_seq = []):
+    def run(self, object, log_seq=[]):
         log_seq = log_seq.copy() + [self.name]
-        w =self.A1.run(object, log_seq)
+        w = self.A1.run(object, log_seq)
         self._last_return = Status.S
         if w == Status.F:
             return Status.S
@@ -225,20 +173,14 @@ class ALWAYS_S(BTNode):
         self._last_return = w
         return w
 
-    def log(self):
-        self._log["kind"] = "ALWAYS_S"
-        if self._last_return is not None:
-            self._log["return"] = self._last_return.name
-        self._log["children"] = { "1": self.A1.log()}
-        return self._log
 
 class LOGIC(BTNode):
-    def __init__(self, fun: Callable[[Any], bool], name: str|None = None):
+    def __init__(self, fun: Callable[[Any], bool], name: str | None = None):
         super().__init__(name)
         self.fun = fun
         self._last_return = None
- 
-    def run(self, object, log_seq = []):
+
+    def run(self, object, log_seq=[]):
         log_seq = log_seq.copy() + [self.name]
         if self.fun(object):
             self._last_return = Status.S
@@ -246,21 +188,23 @@ class LOGIC(BTNode):
         self._last_return = Status.F
         return Status.F
 
-    def log(self):
-        self._log["kind"] = "LOGIC"
-        if self._last_return is not None:
-            self._log["return"] = self._last_return.name
-        return self._log
-
 
 class GEN(BTNode):
     """
-    Creates a dinamic plan. 
-    Uses a generator function a generator function takes an agent 
+    Creates a dinamic plan.
+    Uses a generator function a generator function takes an agent
     and returns a BTNode object
-            
+
     """
-    def __init__(self, generator:Callable[[Any], BTNode], name: str|None = None, reset_on_failure = True, reset_on_success = True, timeout = 1000000, timeout_callback = None):
+
+    def __init__(self,
+                 generator: Callable[[Any],
+                                     BTNode],
+                 name: str | None = None,
+                 reset_on_failure=True,
+                 reset_on_success=True,
+                 timeout=1000000,
+                 timeout_callback=None):
         super().__init__(name)
         self.generator = generator
         self.plan = None
@@ -272,21 +216,16 @@ class GEN(BTNode):
         self.last_log = ""
         self.init_count = 0
         self.timeout_callback = timeout_callback
-    
-    def run(self, object, log_seq = []):
+
+    def run(self, object, log_seq=[]):
         log_seq = log_seq.copy() + [self.name + f"inv:{object.inventory}"]
         if self.plan is None:
-            #try:
-                self.plan = self.generator(object)
-                self.init_count += 1
-            #except Exception as e:
-            #    print(f"Generator Failed due to {e}")
-            #    return Status.F     
-        w = self.plan.run(object, log_seq) 
-        reset_S =(w == Status.S and self.reset_on_success) 
+            self.plan = self.generator(object)
+            self.init_count += 1
+        w = self.plan.run(object, log_seq)
+        reset_S = (w == Status.S and self.reset_on_success)
         reset_F = (w == Status.F and self.reset_on_failure)
-        if  reset_S or reset_F:
-            self.last_log = self.plan.log()
+        if reset_S or reset_F:
             self.plan = None
             if self.timeout_callback is not None:
                 self.timeout_callback(object)
@@ -296,38 +235,28 @@ class GEN(BTNode):
                 self.last_timeout = object.turn
         self._last_return = w
         return w
-    
-    def log(self):
-        self._log["kind"] = "GEN"
-        self._log["init_count"] = self.init_count
-        if self._last_return is not None:
-            self._log["return"] = self._last_return.name
-        if self.plan is not None:
-            self._log["children"] = { "0": self.plan.log()}
-        else:
-            self._log["children"] = { "0": self.last_log}
-            self._log["source"] = "before reset"
-        return self._log
 
- 
+
 class GATE(BTNode):
     """
     Boolean guard
 
     * It takes open and close conditions in the constructor
-    * If the door is closed checks open condition to open it and allow flow via &
-    * If the door is open checks closed condition to close the door if necessary
+    * If the door is closed checks open condition to open it and allow flow
+    * If the door is open checks closed condition to close the door
 
     If the door is open it returns Status.S else Status.F
     """
-    def __init__(self, open_cond: Callable[[Any],bool], close_cond: Callable[[Any],bool], name: str|None = None):
+
+    def __init__(self, open_cond: Callable[[Any], bool], close_cond: Callable[[
+                 Any], bool], name: str | None = None):
         super().__init__(name)
         self._open = False
         self.open_cond = open_cond
         self.close_cond = close_cond
         self._last_return = None
 
-    def run(self, object, log_seq = []):
+    def run(self, object, log_seq=[]):
         log_seq = log_seq.copy() + [self.name]
         if not self._open and self.open_cond(object):
             self._open = True
@@ -342,18 +271,10 @@ class GATE(BTNode):
             return Status.F
         self._last_return = Status.S
         return Status.S
-    
-    def log(self):
-        self._log["kind"] = "GATE"
-        if self._last_return is not None:
-            self._log["return"] = self._last_return.name
-        self._log["open"] = self._open
-        return self._log
-        
-##### Core interaction goes here does not justifies a file
+
 
 class Interaction(BTNode):
-    def __init__(self, command, resource = '', name: str|None = None):
+    def __init__(self, command, resource='', name: str | None = None):
         if name is None:
             if len(resource) > 0:
                 name = command + ' ' + resource
@@ -369,7 +290,7 @@ class Interaction(BTNode):
         self.started = False
         self._last_return = None
 
-    def run(self,object, log_seq):
+    def run(self, object, log_seq):
         log_seq = log_seq.copy() + [self.name]
         if object.marco_polo_target is None:
             mpt = None
@@ -383,19 +304,36 @@ class Interaction(BTNode):
             self.started = True
             self._last_return = Status.O
             with open(f"logs/highlight_{object.name}.jsonl", "a") as f:
-                f.write(json.dumps({"turn": object.turn, "unix_time":time.time(), "name": object.name, "lvl": object.level, "path": log_seq, "s": "O","inventory": object.inventory, "pos": object.pos.tolist(), "totem":mpt,"action":self.command}) + "\n")
+                f.write(json.dumps({"turn": object.turn,
+                                    "unix_time": time.time(),
+                                    "name": object.name,
+                                    "lvl": object.level,
+                                    "path": log_seq,
+                                    "s": "O",
+                                    "inventory": object.inventory,
+                                    "pos": object.pos.tolist(),
+                                    "totem": mpt,
+                                    "action": self.command}) + "\n")
                 f.flush()
             return Status.O
         else:
             self._last_return = self.check_status(object)
             with open(f"logs/highlight_{object.name}.jsonl", "a") as f:
-                f.write(json.dumps({"turn": object.turn,"unix_time":time.time(), "name": object.name, "lvl": object.level, "path": log_seq, "s": self._last_return.name,"inventory": object.inventory, "pos": object.pos.tolist(), "totem":mpt,"action": self.command}) + "\n")
+                f.write(json.dumps({"turn": object.turn,
+                                    "unix_time": time.time(),
+                                    "name": object.name,
+                                    "lvl": object.level,
+                                    "path": log_seq,
+                                    "s": self._last_return.name,
+                                    "inventory": object.inventory,
+                                    "pos": object.pos.tolist(),
+                                    "totem": mpt,
+                                    "action": self.command}) + "\n")
                 f.flush()
             return self._last_return
 
-    
     def check_status(self, object):
-        if self.started == False:
+        if not self.started:
             return Status.O
         for x in object.running_routine:
             if x[0] == self.command and x[1] == self.signature:
@@ -407,10 +345,3 @@ class Interaction(BTNode):
                 elif x[2] == "ok":
                     return Status.S
         return Status.F
-    
-    def log(self):
-        self._log["kind"] = "Interaction"
-        if self._last_return is not None:
-            self._log["return"] = self._last_return.name
-        self._log["command"] = self.command
-        return self._log

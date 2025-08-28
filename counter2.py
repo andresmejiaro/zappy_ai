@@ -1,8 +1,15 @@
 #!/usr/bin/env python3
-import argparse, socket, sys, time, threading, json
+import argparse
+import socket
+import sys
+import time
+import threading
+import json
+
 
 def parse_args():
-    ap = argparse.ArgumentParser(description="Zappy gfx: players & levels over time")
+    ap = argparse.ArgumentParser(
+        description="Zappy gfx: players & levels over time")
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, required=True)
     ap.add_argument("--out", default="-", help="CSV path or '-' for stdout")
@@ -11,6 +18,7 @@ def parse_args():
     ap.add_argument("--quit-on-seg", action="store_true",
                     help="exit on 'seg' (game end)")
     return ap.parse_args()
+
 
 def line_reader(sock, on_line):
     buf = b""
@@ -27,11 +35,12 @@ def line_reader(sock, on_line):
         except socket.timeout:
             continue
 
+
 def main():
     args = parse_args()
     t0 = time.time()
     players = set()          # {pid}
-    levels  = {}             # {pid: level}
+    levels = {}             # {pid: level}
     lock = threading.Lock()
     last_written = {"t": None, "count": None, "levels_sig": None}
     seg_seen = False
@@ -79,9 +88,12 @@ def main():
             lvl_list.sort()
         t = now_s()
         sig = levels_signature(lvl_list)
-        changed = (last_written["count"] != c) or (last_written["levels_sig"] != sig)
+        changed = (
+            last_written["count"] != c) or (
+            last_written["levels_sig"] != sig)
         if force or args.sample > 0.0 or changed:
-            print(f"{t:.3f},{c},{json.dumps(lvl_list)}", file=out, flush=True)
+            print(f"{t: .3f}, {c}, {json.dumps(lvl_list)}",
+                  file=out, flush=True)
             last_written.update(t=t, count=c, levels_sig=sig)
 
     def on_line(line: str):
@@ -130,7 +142,9 @@ def main():
                 maybe_emit()
 
     # reader thread
-    reader = threading.Thread(target=line_reader, args=(s, on_line), daemon=True)
+    reader = threading.Thread(
+        target=line_reader, args=(
+            s, on_line), daemon=True)
     reader.start()
 
     # sampler (optional)
@@ -156,6 +170,7 @@ def main():
         s.close()
         if out is not sys.stdout:
             out.close()
+
 
 if __name__ == "__main__":
     main()
