@@ -303,33 +303,33 @@ class Interaction(BTNode):
             object.running_routine.append([self.command, signature])
             self.started = True
             self._last_return = Status.O
-            with open(f"logs/highlight_{object.name}.jsonl", "a") as f:
-                f.write(json.dumps({"turn": object.turn,
-                                    "unix_time": time.time(),
-                                    "name": object.name,
-                                    "lvl": object.level,
-                                    "path": log_seq,
-                                    "s": "O",
-                                    "inventory": object.inventory,
-                                    "pos": object.pos.tolist(),
-                                    "totem": mpt,
-                                    "action": self.command}) + "\n")
-                f.flush()
+            # with open(f"logs/highlight_{object.name}.jsonl", "a") as f:
+            #     f.write(json.dumps({"turn": object.turn,
+            #                         "unix_time": time.time(),
+            #                         "name": object.name,
+            #                         "lvl": object.level,
+            #                         "path": log_seq,
+            #                         "s": "O",
+            #                         "inventory": object.inventory,
+            #                         "pos": object.pos.tolist(),
+            #                         "totem": mpt,
+            #                         "action": self.command}) + "\n")
+            #     f.flush()
             return Status.O
         else:
             self._last_return = self.check_status(object)
-            with open(f"logs/highlight_{object.name}.jsonl", "a") as f:
-                f.write(json.dumps({"turn": object.turn,
-                                    "unix_time": time.time(),
-                                    "name": object.name,
-                                    "lvl": object.level,
-                                    "path": log_seq,
-                                    "s": self._last_return.name,
-                                    "inventory": object.inventory,
-                                    "pos": object.pos.tolist(),
-                                    "totem": mpt,
-                                    "action": self.command}) + "\n")
-                f.flush()
+            # with open(f"logs/highlight_{object.name}.jsonl", "a") as f:
+            #     f.write(json.dumps({"turn": object.turn,
+            #                         "unix_time": time.time(),
+            #                         "name": object.name,
+            #                         "lvl": object.level,
+            #                         "path": log_seq,
+            #                         "s": self._last_return.name,
+            #                         "inventory": object.inventory,
+            #                         "pos": object.pos.tolist(),
+            #                         "totem": mpt,
+            #                         "action": self.command}) + "\n")
+            #     f.flush()
             return self._last_return
 
     def check_status(self, object):
