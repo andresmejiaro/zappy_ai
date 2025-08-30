@@ -274,8 +274,7 @@ class Agent():
                     okaiable_commands[j](command, x[0], "ko")
                     return
         print(
-            f"ko for unknown command most likely {
-                self.running_routine[0][0]}")
+            f"ko for unknown command most likely {self.running_routine[0][0]}")
         self.resolve_from_running_routine(self.running_routine[0][0], "ko")
 
     def incantation_ko(self, command, x, status="ko"):
