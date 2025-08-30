@@ -1,0 +1,67 @@
+## This is 42 machine specific
+VENV ?= $(HOME)/py312
+PY ?= $(VENV)/bin/python
+PIP ?= $(VENV)/bin/pip
+HOST ?= 127.0.0.1
+PORT ?= 4444
+N    ?= 13
+NAME ?= pollo
+
+
+all: server client gfx
+
+server:
+	make -C zappy
+	cp zappy/server .
+
+server-clean:
+	make -C zappy clean
+	rm -f server
+
+server-fclean: 
+	make -C zappy fclean
+	rm -f server
+
+
+gfx:
+	make -C ZAPPY_GC
+	cp ZAPPY_GC/gfx .
+
+gfx-clean:
+	make -C ZAPPY_GC clean
+	rm -f gfx
+
+gfx-fclean: 
+	make -C ZAPPY_GC fclean
+	rm -f gfx
+
+
+
+client:
+	make -C zappy_ai
+	cp zappy_ai/client .
+
+client-clean:
+	make -C zappy_ai clean
+	rm -f client
+
+client-fclean: 
+	make -C zappy_ai clean
+	rm -f client
+
+client-re: client-fclean client
+
+run-clients:
+	@seq $(N) | xargs -n1 -P $(N) -I{} \
+	  "$(PY)" -m zappy_ai.client -h "$(HOST)" -p "$(PORT)" -n "$(NAME)"
+
+
+server-re: server-fclean server
+
+clean: server-clean client-clean
+
+fclean:  server-fclean client-fclean
+
+re: server-re client-re
+
+.PHONY: all clean fclean re server-clean server-fclean server-re client-clean client-fclean client-re
