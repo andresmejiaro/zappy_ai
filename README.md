@@ -1,5 +1,9 @@
 # Zappy AI — Dev Setup (src layout)
 
+use with server: https://github.com/PepeSegura/zappy
+and graphic client: https://github.com/Tagamydev/ZAPPY_GC
+
+
 Minimal instructions to **install**, **uninstall/recompile**, and **run**.
 
 ---
