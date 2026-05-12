@@ -9,3 +9,5 @@ supervi*
 .eggs/
 build/
 dist/
+external/
+.local/
