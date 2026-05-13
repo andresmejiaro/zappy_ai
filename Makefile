@@ -21,6 +21,16 @@ DEMO_AGENTS ?= 16
 DEMO_TICK ?= 100
 DEMO_LOG_DIR ?= $(CURDIR)/.local/demo
 GODOT_ARGS ?=
+DEMO_VIDEO_SECONDS ?= 20
+DEMO_VIDEO_WARMUP ?= 8
+DEMO_VIDEO_FPS ?= 30
+DEMO_VIDEO_OUT ?=
+DEMO_MODE ?=
+DEMO_RECORD_PROTOCOL ?=
+DEMO_REPLAY_FILE ?=
+DEMO_MONTAGE_OUT ?=
+DEMO_MONTAGE_RECORD_SECONDS ?= 150
+DEMO_MONTAGE_AUDIO_FILES ?=
 
 
 all: client
@@ -63,7 +73,12 @@ demo-server:
 	@./external/zappy/server -p "$(DEMO_PORT)" -x "$(DEMO_WIDTH)" -y "$(DEMO_HEIGHT)" -n "$(DEMO_TEAM)" -c "$(DEMO_SLOTS)" -t "$(DEMO_TICK)"
 
 demo-gui:
-	@./scripts/run_gui.sh $(GODOT_ARGS)
+	@DEMO_MODE="$(DEMO_MODE)" \
+	  DEMO_RECORD_PROTOCOL="$(DEMO_RECORD_PROTOCOL)" \
+	  DEMO_REPLAY_FILE="$(DEMO_REPLAY_FILE)" \
+	  DEMO_WIDTH="$(DEMO_WIDTH)" \
+	  DEMO_HEIGHT="$(DEMO_HEIGHT)" \
+	  ./scripts/run_gui.sh $(GODOT_ARGS)
 
 demo-ai:
 	@echo "Starting AI client against $(DEMO_HOST):$(DEMO_PORT) as team $(DEMO_TEAM)"
@@ -79,7 +94,66 @@ demo-full:
 	  DEMO_SLOTS="$(DEMO_SLOTS)" \
 	  DEMO_TICK="$(DEMO_TICK)" \
 	  DEMO_LOG_DIR="$(DEMO_LOG_DIR)" \
+	  DEMO_MODE="$(DEMO_MODE)" \
+	  DEMO_RECORD_PROTOCOL="$(DEMO_RECORD_PROTOCOL)" \
+	  DEMO_REPLAY_FILE="$(DEMO_REPLAY_FILE)" \
 	  GODOT_ARGS="$(GODOT_ARGS)" \
 	  ./scripts/demo_full.sh
 
-.PHONY: all clean fclean re run-clients demo-preflight demo-ai-install demo-server demo-gui demo-ai demo-full
+demo-video:
+	@DEMO_HOST="$(DEMO_HOST)" \
+	  DEMO_PORT="$(DEMO_PORT)" \
+	  DEMO_TEAM="$(DEMO_TEAM)" \
+	  DEMO_WIDTH="$(DEMO_WIDTH)" \
+	  DEMO_HEIGHT="$(DEMO_HEIGHT)" \
+	  DEMO_AGENTS="$(DEMO_AGENTS)" \
+	  DEMO_SLOTS="$(DEMO_SLOTS)" \
+	  DEMO_TICK="$(DEMO_TICK)" \
+	  DEMO_LOG_DIR="$(DEMO_LOG_DIR)" \
+	  DEMO_MODE="1" \
+	  DEMO_RECORD_PROTOCOL="$(DEMO_RECORD_PROTOCOL)" \
+	  DEMO_REPLAY_FILE="" \
+	  DEMO_VIDEO_SECONDS="$(DEMO_VIDEO_SECONDS)" \
+	  DEMO_VIDEO_WARMUP="$(DEMO_VIDEO_WARMUP)" \
+	  DEMO_VIDEO_FPS="$(DEMO_VIDEO_FPS)" \
+	  DEMO_VIDEO_OUT="$(DEMO_VIDEO_OUT)" \
+	  GODOT_ARGS="$(GODOT_ARGS)" \
+	  ./scripts/demo_video.sh
+
+demo-replay-video:
+	@DEMO_HOST="$(DEMO_HOST)" \
+	  DEMO_PORT="$(DEMO_PORT)" \
+	  DEMO_TEAM="$(DEMO_TEAM)" \
+	  DEMO_WIDTH="$(DEMO_WIDTH)" \
+	  DEMO_HEIGHT="$(DEMO_HEIGHT)" \
+	  DEMO_AGENTS="$(DEMO_AGENTS)" \
+	  DEMO_SLOTS="$(DEMO_SLOTS)" \
+	  DEMO_TICK="$(DEMO_TICK)" \
+	  DEMO_LOG_DIR="$(DEMO_LOG_DIR)" \
+	  DEMO_MODE="1" \
+	  DEMO_RECORD_PROTOCOL="" \
+	  DEMO_REPLAY_FILE="$(DEMO_REPLAY_FILE)" \
+	  DEMO_VIDEO_SECONDS="$(DEMO_VIDEO_SECONDS)" \
+	  DEMO_VIDEO_WARMUP="$(DEMO_VIDEO_WARMUP)" \
+	  DEMO_VIDEO_FPS="$(DEMO_VIDEO_FPS)" \
+	  DEMO_VIDEO_OUT="$(DEMO_VIDEO_OUT)" \
+	  GODOT_ARGS="$(GODOT_ARGS)" \
+	  ./scripts/demo_video.sh
+
+demo-ai-video:
+	@DEMO_HOST="$(DEMO_HOST)" \
+	  DEMO_PORT="$(DEMO_PORT)" \
+	  DEMO_TEAM="$(DEMO_TEAM)" \
+	  DEMO_WIDTH="$(DEMO_WIDTH)" \
+	  DEMO_HEIGHT="$(DEMO_HEIGHT)" \
+	  DEMO_AGENTS="$(DEMO_AGENTS)" \
+	  DEMO_SLOTS="$(DEMO_SLOTS)" \
+	  DEMO_TICK="$(DEMO_TICK)" \
+	  DEMO_LOG_DIR="$(DEMO_LOG_DIR)" \
+	  DEMO_REPLAY_FILE="$(DEMO_REPLAY_FILE)" \
+	  DEMO_MONTAGE_OUT="$(DEMO_MONTAGE_OUT)" \
+	  DEMO_MONTAGE_RECORD_SECONDS="$(DEMO_MONTAGE_RECORD_SECONDS)" \
+	  DEMO_MONTAGE_AUDIO_FILES="$(DEMO_MONTAGE_AUDIO_FILES)" \
+	  "$(LOCAL_PY)" ./scripts/render_zappy_ai_video.py
+
+.PHONY: all clean fclean re run-clients demo-preflight demo-ai-install demo-server demo-gui demo-ai demo-full demo-video demo-replay-video demo-ai-video

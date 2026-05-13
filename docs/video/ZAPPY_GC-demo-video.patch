@@ -1,0 +1,704 @@
+diff --git a/Scripts/GameManager.gd b/Scripts/GameManager.gd
+index ca03c98..2b23569 100644
+--- a/Scripts/GameManager.gd
++++ b/Scripts/GameManager.gd
+@@ -148,6 +148,7 @@ func msz(x, y):
+ 			SignalBus.load_bar.emit(((i * island_y) + j + 1) / (island_x * island_y) * 100)
+ 			j += 1
+ 		i += 1
++	SignalBus.map_size_ready.emit(island_x, island_y)
+ 	SignalBus.remove_load_screen.emit()
+ 
+ 
+diff --git a/Scripts/Network.gd b/Scripts/Network.gd
+index dacd9ba..e8a91bf 100644
+--- a/Scripts/Network.gd
++++ b/Scripts/Network.gd
+@@ -1,16 +1,47 @@
+ extends Node
+ 
+ var enable := false
+-
+-var tcp : StreamPeer = null
++var tcp: StreamPeerTCP = null
+ var connected := false
+ var commandBuffer: Array = []
+ var flush := false
+ 
+-
+ var host_restore
+ var port_restore
+-var once_reconnection: bool = false
++var once_reconnection := false
++var pending_text := ""
++
++var replay_mode := false
++var replay_events: Array = []
++var replay_index := 0
++var replay_started_at := 0
++var replay_finished := false
++
++var record_protocol := false
++var record_started_at := 0
++var record_file = null
++var record_path := ""
++
++
++func _env_enabled(name: String) -> bool:
++	var value := OS.get_environment(name).strip_edges().to_lower()
++	return value in ["1", "true", "yes", "on"]
++
++
++func _repo_root() -> String:
++	var root := OS.get_environment("ZAPPY_REPO_ROOT")
++	if root == "":
++		root = ProjectSettings.globalize_path("res://../..")
++	return root
++
++
++func _close_recording() -> void:
++	if record_file != null:
++		record_file.flush()
++	record_file = null
++	record_path = ""
++	record_started_at = 0
++	record_protocol = false
+ 
+ 
+ func set_zero():
+@@ -21,19 +52,132 @@ func set_zero():
+ 	tcp = null
+ 	SignalBus.SceneLoaded = false
+ 	once_reconnection = false
++	pending_text = ""
++	replay_mode = false
++	replay_events.clear()
++	replay_index = 0
++	replay_started_at = 0
++	replay_finished = false
++	_close_recording()
++
+ 
+ func retry_connection():
+ 	set_zero()
+ 	SignalBus.new_connection.emit(host_restore, port_restore)
+ 
+ 
++func _start_protocol_recording(host, port) -> void:
++	if not _env_enabled("DEMO_RECORD_PROTOCOL"):
++		return
++
++	var replay_dir := _repo_root() + "/.local/demo/replay"
++	DirAccess.make_dir_recursive_absolute(replay_dir)
++
++	record_path = replay_dir + "/protocol-" + str(Time.get_unix_time_from_system()).replace(".", "") + ".jsonl"
++	record_file = FileAccess.open(record_path, FileAccess.WRITE)
++	if record_file == null:
++		print("Failed to open protocol recording file: ", record_path)
++		record_protocol = false
++		return
++
++	record_protocol = true
++	record_started_at = Time.get_ticks_msec()
++	record_file.store_line(JSON.stringify({
++		"type": "session",
++		"recorded_at": Time.get_datetime_string_from_system(),
++		"host": str(host),
++		"port": int(port),
++		"demo_mode": _env_enabled("DEMO_MODE"),
++	}))
++	record_file.flush()
++	print("Protocol recording: ", record_path)
++
++
++func _record_protocol_line(line: String) -> void:
++	if not record_protocol or record_file == null or line == "":
++		return
++
++	record_file.store_line(JSON.stringify({
++		"type": "event",
++		"t_ms": Time.get_ticks_msec() - record_started_at,
++		"line": line,
++	}))
++	record_file.flush()
++
++
++func _emit_protocol_line(line: String) -> void:
++	if line == "":
++		return
++
++	_record_protocol_line(line)
++
++	if SignalBus.SceneLoaded and flush:
++		SignalBus.command.emit(line)
++	else:
++		commandBuffer.append(line)
++
++
++func _consume_text(text: String) -> void:
++	pending_text += text
++
++	while true:
++		var newline_index := pending_text.find("\n")
++		if newline_index == -1:
++			break
++
++		var line := pending_text.substr(0, newline_index).trim_suffix("\r")
++		pending_text = pending_text.substr(newline_index + 1)
++		_emit_protocol_line(line)
++
++
++func _load_replay_events(path: String) -> bool:
++	replay_events.clear()
++
++	var file = FileAccess.open(path, FileAccess.READ)
++	if file == null:
++		error(str("Replay file not found: ", path))
++		return false
++
++	while not file.eof_reached():
++		var raw = file.get_line()
++		if raw == "":
++			continue
++
++		var parsed = JSON.parse_string(raw)
++		if typeof(parsed) != TYPE_DICTIONARY:
++			continue
++
++		if parsed.get("type", "") == "event" and parsed.has("line"):
++			replay_events.append(parsed)
++
++	file = null
++
++	if replay_events.is_empty():
++		error(str("Replay file contains no protocol events: ", path))
++		return false
++
++	print("Replay session loaded: ", replay_events.size(), " events from ", path)
++	return true
++
++
+ func connection(host, port):
+ 	host_restore = host
+ 	port_restore = port
+-	tcp = null
++
++	replay_mode = OS.get_environment("DEMO_REPLAY_FILE") != ""
++	if replay_mode:
++		if not _load_replay_events(OS.get_environment("DEMO_REPLAY_FILE")):
++			return
++
++		connected = true
++		enable = true
++		replay_started_at = Time.get_ticks_msec()
++		SignalBus.start_game.emit()
++		return
++
+ 	tcp = StreamPeerTCP.new()
+-	
+-	var err : Error = tcp.connect_to_host(host, int(port))
++
++	var err: Error = tcp.connect_to_host(host, int(port))
+ 	if err != OK:
+ 		print("Failed to connect: ", err)
+ 	else:
+@@ -47,28 +191,27 @@ func _ready():
+ 	SignalBus.hide_menu.connect(set_zero)
+ 
+ 
+-func error(error):
+-	SignalBus.stop_load_animation.emit(error)
++func error(error_message):
++	SignalBus.stop_load_animation.emit(error_message)
+ 	set_zero()
+-	print(error)
++	print(error_message)
+ 
+ 
+ func listen():
+-	# Required call!
+ 	tcp.poll()
+ 
+ 	match tcp.get_status():
+ 		StreamPeerTCP.STATUS_CONNECTING:
+ 			print("Connecting...")
+-			
++
+ 		StreamPeerTCP.STATUS_CONNECTED:
+ 			if not connected:
+ 				connected = true
+ 				print("Connected to server.")
+ 				_send_message("GRAPHIC\n")
++				_start_protocol_recording(host_restore, port_restore)
+ 				SignalBus.start_game.emit()
+ 
+-			# Check for incoming data
+ 			var available := tcp.get_available_bytes()
+ 			if available > 0:
+ 				var result = tcp.get_data(available)
+@@ -76,42 +219,59 @@ func listen():
+ 					var byte_array = result[1]
+ 					var message = byte_array.get_string_from_utf8()
+ 					print("Received in network: ", message)
+-					if SignalBus.SceneLoaded and flush:
+-						SignalBus.command.emit(message)
+-					else:
+-						commandBuffer.append(message)
+-						
++					_consume_text(message)
+ 				else:
+ 					error(str("Error: reading data: ", result[0]))
+ 
+ 		StreamPeerTCP.STATUS_ERROR:
+-			var test = 1
+-			error(str("Error: server connection timeout"))
+-
++			error("Error: server connection timeout")
+ 
+ 		StreamPeerTCP.STATUS_NONE:
+ 			if not once_reconnection:
+ 				SignalBus.server_down.emit()
+ 				once_reconnection = true
+-			# Not connected
+-			pass
+-	
++
++
++func _replay_tick() -> void:
++	var elapsed := Time.get_ticks_msec() - replay_started_at
++
++	while replay_index < replay_events.size():
++		var replay_event = replay_events[replay_index]
++		var target_time := int(replay_event.get("t_ms", 0))
++		if target_time > elapsed:
++			break
++
++		_emit_protocol_line(str(replay_event.get("line", "")))
++		replay_index += 1
++
++	if replay_index >= replay_events.size() and not replay_finished:
++		replay_finished = true
++		print("Replay finished.")
++
++	if replay_finished and flush:
++		enable = false
++
+ 
+ func return_to_menu():
+ 	flush = false
+ 	commandBuffer.clear()
++	pending_text = ""
+ 	SignalBus.SceneLoaded = false
+ 
+ 
+ func _process(delta):
+-	if (enable):
++	if enable:
+ 		if SignalBus.SceneLoaded and not flush:
+ 			print("Network: Scene loaded!!")
+-			for command in commandBuffer.size():
+-				SignalBus.command.emit(commandBuffer[command])
++			for command in commandBuffer:
++				SignalBus.command.emit(command)
+ 			commandBuffer.clear()
+ 			flush = true
+-		listen()
++
++		if replay_mode:
++			_replay_tick()
++		else:
++			listen()
+ 
+ 
+ func _send_message(message: String):
+diff --git a/Scripts/SignalBus.gd b/Scripts/SignalBus.gd
+index 08868a6..2ad148e 100644
+--- a/Scripts/SignalBus.gd
++++ b/Scripts/SignalBus.gd
+@@ -21,6 +21,7 @@ signal hide_player_viewer()
+ signal hide_tile_viewer(n)
+ signal start_player_incatation(id)
+ signal player_start(pos)
++signal map_size_ready(width, height)
+ signal load_bar(number)
+ signal remove_load_screen()
+ signal server_down()
+diff --git a/Scripts/StartButton.gd b/Scripts/StartButton.gd
+index 5000221..29e4976 100644
+--- a/Scripts/StartButton.gd
++++ b/Scripts/StartButton.gd
+@@ -1,5 +1,6 @@
+ extends Button
+ 
++const MAIN_MENU_SCENE := "res://Scenes/MainMenuUI.tscn"
+ 
+ @onready var Port = $"../Port"
+ @onready var Host = $"../Host"
+@@ -9,11 +10,18 @@ var hostString = "127.0.0.1"
+ 
+ 
+ func _ready() -> void:
++	if not _is_root_main_menu():
++		return
+ 	# Auto-connect with default values (127.0.0.1:4242) after a brief delay
+ 	await get_tree().process_frame
+ 	_on_pressed()
+ 
+ 
++func _is_root_main_menu() -> bool:
++	var current_scene := get_tree().current_scene
++	return current_scene != null and current_scene.scene_file_path == MAIN_MENU_SCENE
++
++
+ func _on_pressed() -> void:
+ 	SignalBus.hide_menu.emit()
+ 	if Port.text != "":
+diff --git a/Scripts/character_body_spectate.gd b/Scripts/character_body_spectate.gd
+index c038271..e0a520f 100644
+--- a/Scripts/character_body_spectate.gd
++++ b/Scripts/character_body_spectate.gd
+@@ -1,45 +1,70 @@
+ extends CharacterBody3D
+ 
+-var SPEED = 5.0
+ const JUMP_VELOCITY = 2.5
+ const SENS = 0.001
++const DEMO_TITLE = "Zappy Demo"
++const DEMO_RESOLUTION = Vector2i(1920, 1080)
++const DEMO_POSITION = Vector2i(32, 40)
++const DEMO_TILE_SIZE = 5.0
+ 
++var SPEED = 5.0
+ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
+ 
+ @onready var neck := $Neck
+ @onready var camera := $Neck/Camera3D
+ 
+ var rotating := false
+-
+ var playerLocked: Node3D = null
+ var lock: bool = false
++var demo_mode := false
++
++
++func _env_enabled(name: String) -> bool:
++	var value := OS.get_environment(name).strip_edges().to_lower()
++	return value in ["1", "true", "yes", "on"]
++
++
++func _env_string(name: String, fallback: String = "") -> String:
++	var value := OS.get_environment(name).strip_edges()
++	if value == "":
++		return fallback
++	return value
++
++
++func _env_float(name: String, fallback: float) -> float:
++	var value := OS.get_environment(name).strip_edges()
++	if value == "":
++		return fallback
++	return float(value)
++
+ 
+ func move_player_start(pos):
++	if demo_mode:
++		return
++
+ 	global_position = pos
+ 	global_position.y += 10
+-	global_position.x = - 10
++	global_position.x = -10
+ 	var dir = (pos - camera.global_transform.origin).normalized()
+-
+-	# Get yaw (rotation around Y axis)
+ 	var yaw = atan2(dir.x, dir.z)
+-
+-	# Get pitch (rotation around X axis)
+ 	var pitch = asin(dir.y)
+ 
+-	# Apply to your neck/camera
+ 	neck.rotation.y = yaw + PI
+ 	camera.rotation.x = pitch
+-	
++
+ 
+ func raycastInteraction():
++	if demo_mode:
++		return
++
+ 	var mouse_pos = get_viewport().get_mouse_position()
+ 	var ray_origin = camera.project_ray_origin(mouse_pos)
+ 	var ray_dir = camera.project_ray_normal(mouse_pos)
+-	
++
+ 	var space_state = get_world_3d().direct_space_state
+ 	var query = PhysicsRayQueryParameters3D.create(ray_origin, ray_origin + ray_dir * 100)
+ 	query.collision_mask = 2
+-	
++
+ 	var result = space_state.intersect_ray(query)
+ 	if result:
+ 		var collider = result.collider
+@@ -48,25 +73,25 @@ func raycastInteraction():
+ 
+ 
+ func lock_player(player):
++	if demo_mode:
++		return
++
+ 	lock = true
+ 	playerLocked = player
+ 	position = player.position
+ 
+-	# Calculate direction from camera to target
+ 	var dir = (player.global_transform.origin - camera.global_transform.origin).normalized()
+-
+-	# Get yaw (rotation around Y axis)
+ 	var yaw = atan2(dir.x, dir.z)
+-
+-	# Get pitch (rotation around X axis)
+ 	var pitch = asin(dir.y)
+ 
+-	# Apply to your neck/camera
+ 	neck.rotation.y = yaw + PI
+ 	camera.rotation.x = pitch
+-	
+-	
++
++
+ func _input(event: InputEvent) -> void:
++	if demo_mode:
++		return
++
+ 	if event is InputEventMouseButton:
+ 		if event.button_index == MOUSE_BUTTON_RIGHT:
+ 			if event.pressed:
+@@ -75,27 +100,28 @@ func _input(event: InputEvent) -> void:
+ 			else:
+ 				Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+ 				rotating = false
+-	
++
+ 	elif event is InputEventMouseMotion and rotating:
+ 		neck.rotate_y(-event.relative.x * SENS)
+ 		camera.rotate_x(-event.relative.y * SENS)
+ 		camera.rotation.x = clamp(camera.rotation.x, deg_to_rad(-90), deg_to_rad(90))
+-	
++
+ 	if event is InputEventMouseButton and (event.button_index == MOUSE_BUTTON_WHEEL_DOWN or event.button_index == MOUSE_BUTTON_WHEEL_UP):
+ 		SPEED += int(event.button_index == MOUSE_BUTTON_WHEEL_UP)
+ 		SPEED -= int(event.button_index == MOUSE_BUTTON_WHEEL_DOWN)
+ 		SPEED = clamp(SPEED, 5, 100)
+ 
++
+ func _physics_process(delta: float) -> void:
+-	# Optional gravity (if you want to float freely, disable this)
+-	# if not is_on_floor():
+-	#     velocity.y -= gravity * delta
++	if demo_mode:
++		velocity = Vector3.ZERO
++		return
+ 
+ 	if Input.is_action_just_pressed("ui_accept") and is_on_floor():
+ 		velocity.y = JUMP_VELOCITY
+ 
+ 	var input_dir = Input.get_vector("left", "right", "forward", "back")
+-	
++
+ 	var up_down = Input.get_vector("Ctrl", "Space", "Ctrl", "Space")
+ 	if up_down.x > 0:
+ 		up_down = 1
+@@ -103,30 +129,189 @@ func _physics_process(delta: float) -> void:
+ 		up_down = -1
+ 	else:
+ 		up_down = 0
+-		
++
+ 	var direction = (camera.global_transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
+-	
++
+ 	if direction:
+ 		velocity = direction * SPEED
+ 	else:
+ 		velocity.x = move_toward(velocity.x, 0, SPEED)
+-		velocity.y = move_toward(velocity.y, 0, SPEED) + (0.5 * up_down * SPEED)# if using gravity
++		velocity.y = move_toward(velocity.y, 0, SPEED) + (0.5 * up_down * SPEED)
+ 		velocity.z = move_toward(velocity.z, 0, SPEED)
+ 
+ 	move_and_slide()
+ 
++
+ func _process(delta: float) -> void:
++	if demo_mode:
++		return
++
+ 	if Input.is_action_just_pressed("leftclick"):
+ 		raycastInteraction()
+-	if lock:
++	if lock and playerLocked != null:
+ 		position = playerLocked.position
+ 
+ 
+ func unlock():
+ 	lock = false
++	playerLocked = null
++
++
++func _apply_demo_window() -> void:
++	if DisplayServer.get_name() == "headless":
++		return
++
++	DisplayServer.window_set_title(DEMO_TITLE)
++	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
++	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_BORDERLESS, true)
++	DisplayServer.window_set_size(DEMO_RESOLUTION)
++	DisplayServer.window_set_position(DEMO_POSITION)
++
++
++func _hide_capture_ui() -> void:
++	var current_scene = get_tree().current_scene
++	if current_scene == null:
++		return
++
++	var ui_root = current_scene.get_node_or_null("Control")
++	if ui_root == null:
++		return
++
++	var hidden_paths = [
++		"Panel",
++		"HBoxContainer",
++		"Chat",
++		"HBoxContainer2",
++		"TextureButton",
++		"HBoxContainer3",
++		"PauseMenu",
++	]
++
++	for path in hidden_paths:
++		var node = ui_root.get_node_or_null(path)
++		if node != null:
++			node.visible = false
++
++
++func _apply_demo_visuals() -> void:
++	var current_scene = get_tree().current_scene
++	if current_scene == null:
++		return
++
++	var world_environment = current_scene.get_node_or_null("WorldEnvironment")
++	if world_environment != null and world_environment.environment != null:
++		var demo_environment = world_environment.environment.duplicate()
++		demo_environment.glow_enabled = false
++		demo_environment.volumetric_fog_enabled = false
++		demo_environment.volumetric_fog_density = 0.0
++		demo_environment.adjustment_enabled = true
++		demo_environment.adjustment_brightness = 0.82
++		demo_environment.adjustment_contrast = 0.98
++		demo_environment.adjustment_saturation = 0.92
++
++		if demo_environment.sky != null:
++			var demo_sky = demo_environment.sky.duplicate()
++			if demo_sky.sky_material != null:
++				var sky_material = demo_sky.sky_material.duplicate()
++				sky_material.set("energy_multiplier", 1.35)
++				demo_sky.sky_material = sky_material
++			demo_environment.sky = demo_sky
++
++		world_environment.environment = demo_environment
++
++	var light = current_scene.get_node_or_null("DirectionalLight3D")
++	if light != null:
++		light.light_energy = 1.35
++
++
++func _demo_map_center(width: int, height: int) -> Vector3:
++	return Vector3(float(width - 1) * DEMO_TILE_SIZE * 0.5, 0.0, float(height - 1) * DEMO_TILE_SIZE * 0.5)
++
++
++func _demo_focus_point(width: int, height: int) -> Vector3:
++	var center := _demo_map_center(width, height)
++	var raw_x := _env_string("DEMO_CAMERA_FOCUS_X")
++	var raw_y := _env_string("DEMO_CAMERA_FOCUS_Y")
++
++	if raw_x == "" or raw_y == "":
++		return center
++
++	var focus_x := clampi(int(raw_x), 0, width - 1)
++	var focus_y := clampi(int(raw_y), 0, height - 1)
++	return Vector3(float(focus_x) * DEMO_TILE_SIZE, 0.0, float(focus_y) * DEMO_TILE_SIZE)
++
++
++func _look_at_target(target: Vector3) -> void:
++	neck.rotation = Vector3.ZERO
++	camera.rotation = Vector3.ZERO
++
++	var dir = (target - camera.global_transform.origin).normalized()
++	var yaw = atan2(dir.x, dir.z)
++	var pitch = asin(dir.y)
++
++	neck.rotation.y = yaw + PI
++	camera.rotation.x = pitch
++
++
++func _set_demo_camera(width: int, height: int) -> void:
++	var span := float(max(width, height)) * DEMO_TILE_SIZE
++	var center := _demo_map_center(width, height)
++	var focus := _demo_focus_point(width, height)
++	var preset := _env_string("DEMO_CAMERA_PRESET", "overview").to_lower()
++	var target := focus + Vector3(0.0, 2.0, 0.0)
++
++	lock = false
++	playerLocked = null
++	match preset:
++		"overview":
++			camera.fov = 35.0
++			global_position = center + Vector3(-span * 0.8, span * 1.1, span * 0.9)
++			target = center + Vector3(0.0, 2.0, 0.0)
++		"medium":
++			camera.fov = 32.0
++			global_position = focus + Vector3(-span * 0.40, span * 0.56, span * 0.40)
++		"medium_alt":
++			camera.fov = 32.0
++			global_position = focus + Vector3(span * 0.38, span * 0.52, -span * 0.34)
++		"topdown":
++			camera.fov = 25.0
++			global_position = focus + Vector3(0.0, span * 0.96, 0.01)
++			target = focus
++		"low":
++			camera.fov = 35.0
++			global_position = focus + Vector3(-span * 0.24, span * 0.27, span * 0.24)
++		"low_alt":
++			camera.fov = 35.0
++			global_position = focus + Vector3(span * 0.22, span * 0.26, -span * 0.22)
++		"queen":
++			camera.fov = 30.0
++			global_position = focus + Vector3(-span * 0.30, span * 0.42, span * 0.30)
++		"queen_alt":
++			camera.fov = 30.0
++			global_position = focus + Vector3(span * 0.28, span * 0.40, -span * 0.28)
++		"dense":
++			camera.fov = 30.0
++			global_position = focus + Vector3(-span * 0.26, span * 0.36, span * 0.26)
++		"dense_alt":
++			camera.fov = 30.0
++			global_position = focus + Vector3(span * 0.24, span * 0.34, -span * 0.24)
++		_:
++			camera.fov = 35.0
++			global_position = center + Vector3(-span * 0.8, span * 1.1, span * 0.9)
++			target = center + Vector3(0.0, 2.0, 0.0)
++
++	_look_at_target(target)
+ 
+ 
+ func _ready():
++	demo_mode = _env_enabled("DEMO_MODE") or OS.get_environment("DEMO_REPLAY_FILE") != ""
++
+ 	SignalBus.unlock_player.connect(unlock)
+ 	SignalBus.lock_player.connect(lock_player)
+ 	SignalBus.player_start.connect(move_player_start)
++
++	if demo_mode:
++		_apply_demo_window()
++		call_deferred("_hide_capture_ui")
++		call_deferred("_apply_demo_visuals")
++		SignalBus.map_size_ready.connect(_set_demo_camera)
